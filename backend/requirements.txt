@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+python-multipart
+onnxruntime
+paddleocr
+pdf2image
+Pillow
+openai
+python-dotenv

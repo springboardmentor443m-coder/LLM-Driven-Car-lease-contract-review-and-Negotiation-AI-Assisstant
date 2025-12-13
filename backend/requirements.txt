@@ -1,0 +1,12 @@
+fastapi
+uvicorn[standard]
+pydantic
+python-multipart
+pillow
+pytesseract
+pdf2image
+requests
+sqlalchemy
+alembic
+openai>=0.27.0
+python-dotenv

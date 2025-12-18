@@ -2,7 +2,7 @@ import requests
 import json
 
 # 🔑 Paste your Groq API key here
-GROQ_API_KEY = "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"
+GROQ_API_KEY = "ENTER YOUR API KEY"
 
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 
@@ -46,3 +46,4 @@ Explain clearly for a normal user.
         raise RuntimeError(f"Groq API error: {response.text}")
 
     return response.json()["choices"][0]["message"]["content"]
+

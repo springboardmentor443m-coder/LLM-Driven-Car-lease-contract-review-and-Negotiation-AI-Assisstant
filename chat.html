@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Car Negotiation Assistant</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            color: #334155;
+            line-height: 1.5;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .chat-box {
+            width: 100%;
+            max-width: 900px;
+            margin: auto;
+            background: white;
+            padding: 0;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 85vh;
+            max-height: 800px;
+        }
+
+        /* Header */
+        .chat-box h2 {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            color: white;
+            padding: 24px 30px;
+            margin: 0;
+            font-size: 1.6rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .chat-box h2:before {
+            content: "🤖";
+            font-size: 1.8rem;
+            background: rgba(255, 255, 255, 0.15);
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+
+        /* Chat Area */
+        #chat {
+            flex: 1;
+            padding: 25px;
+            overflow-y: auto;
+            background: #fafcff;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .message {
+            margin: 0;
+            max-width: 85%;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            align-self: flex-end;
+        }
+
+        .message.bot {
+            align-self: flex-start;
+        }
+
+        /* Message Bubbles */
+        .message.user {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            padding: 16px 20px;
+            border-radius: 18px;
+            border-bottom-right-radius: 5px;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+            position: relative;
+        }
+
+        .message.bot {
+            background: white;
+            color: #334155;
+            padding: 16px 20px;
+            border-radius: 18px;
+            border-bottom-left-radius: 5px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            position: relative;
+        }
+
+        .message.user:before {
+            content: "👤";
+            margin-right: 8px;
+            font-size: 0.9rem;
+        }
+
+        .message.bot:before {
+            content: "🤖";
+            margin-right: 8px;
+            font-size: 0.9rem;
+        }
+
+        /* Input Area */
+        .input-area {
+            padding: 20px 25px;
+            border-top: 1px solid #f1f5f9;
+            background: white;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        input {
+            flex: 1;
+            padding: 16px 20px;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            font-size: 1rem;
+            color: #334155;
+            background: #f8fafc;
+            transition: all 0.3s;
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+            background: white;
+        }
+
+        input::placeholder {
+            color: #94a3b8;
+        }
+
+        button {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            padding: 16px 26px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.35);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:before {
+            content: "↗";
+            font-size: 1.1rem;
+        }
+
+        /* Scrollbar Styling */
+        #chat::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #chat::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+
+        #chat::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        #chat::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .chat-box {
+                height: 90vh;
+                max-height: none;
+                border-radius: 15px;
+            }
+            
+            .chat-box h2 {
+                padding: 18px 20px;
+                font-size: 1.4rem;
+            }
+            
+            #chat {
+                padding: 20px;
+            }
+            
+            .input-area {
+                padding: 15px 20px;
+                flex-direction: column;
+                gap: 12px;
+            }
+            
+            input, button {
+                width: 100%;
+            }
+            
+            button {
+                justify-content: center;
+            }
+            
+            .message {
+                max-width: 95%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="chat-box">
+    <h2>AI Negotiation Chatbot</h2>
+
+    <div id="chat"></div>
+
+    <div class="input-area">
+        <input type="text" id="question" placeholder="Ask about price, APR, negotiation..." autocomplete="off">
+        <button onclick="send()">Send</button>
+    </div>
+</div>
+
+<script>
+// EXACTLY YOUR ORIGINAL JAVASCRIPT - NO CHANGES
+async function send() {
+    const q = document.getElementById("question").value;
+    if (!q) return;
+
+    const formData = new FormData();
+    formData.append("user_question", q);
+
+    const res = await fetch("/chat_process", {
+        method: "POST",
+        body: formData
+    });
+
+    const data = await res.json();
+
+    const chat = document.getElementById("chat");
+    chat.innerHTML = "";
+
+    data.chat_history.forEach(msg => {
+        const div = document.createElement("div");
+        div.className = "message " + (msg.role === "user" ? "user" : "bot");
+        div.innerText = msg.text;
+        chat.appendChild(div);
+    });
+
+    document.getElementById("question").value = "";
+}
+</script>
+
+</body>
+</html>

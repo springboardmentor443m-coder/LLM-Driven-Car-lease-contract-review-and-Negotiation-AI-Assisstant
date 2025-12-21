@@ -4,106 +4,476 @@
     <meta charset="UTF-8">
     <title>AI Car Lease & Loan Analyzer</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f4f6f8;
+        * {
             margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            color: #334155;
+            line-height: 1.5;
+            min-height: 100vh;
+        }
+
         header {
-            background: #1f2937;
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
             color: white;
-            padding: 20px;
+            padding: 30px 20px;
             text-align: center;
+            box-shadow: 0 4px 20px rgba(30, 64, 175, 0.2);
+            position: relative;
+            overflow: hidden;
         }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            transform: translate(30%, -30%);
+        }
+
+        header h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            position: relative;
+        }
+
+        header p {
+            font-size: 1rem;
+            opacity: 0.9;
+            font-weight: 400;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
         main {
             max-width: 1100px;
-            margin: 20px auto;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .section {
+            margin-top: 30px;
             background: white;
-            padding: 25px;
-            border-radius: 8px;
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+            border: 1px solid #f1f5f9;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
+
+        .section:hover {
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        h2:before {
+            font-size: 1.3rem;
+        }
+
+        .section:nth-child(1) h2:before { content: "📄"; }
+        .section:nth-child(2) h2:before { content: "📊"; }
+        .section:nth-child(3) h2:before { content: "🚗"; }
+        .section:nth-child(4) h2:before { content: "⚠️"; }
+        .section:nth-child(5) h2:before { content: "📈"; }
+        .section:nth-child(6) h2:before { content: "💬"; }
+
+        /* Upload Box */
         .upload-box {
-            border: 2px dashed #9ca3af;
-            padding: 30px;
+            border: 2px dashed #cbd5e1;
+            padding: 40px 20px;
             text-align: center;
-            border-radius: 6px;
+            border-radius: 16px;
+            background: #f8fafc;
+            transition: all 0.3s;
+            position: relative;
         }
+
+        .upload-box:hover {
+            border-color: #3b82f6;
+            background: #f0f9ff;
+        }
+
+        .upload-box h2 {
+            margin-bottom: 25px;
+            justify-content: center;
+        }
+
+        #fileInput {
+            width: 100%;
+            max-width: 400px;
+            padding: 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1rem;
+            background: white;
+            margin: 0 auto 20px;
+            display: block;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        #fileInput:hover {
+            border-color: #3b82f6;
+        }
+
+        #fileInput:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+
         button {
-            background: #2563eb;
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
             color: white;
             border: none;
-            padding: 10px 18px;
-            border-radius: 5px;
+            padding: 14px 28px;
+            border-radius: 12px;
             cursor: pointer;
-            margin-top: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
         }
+
         button:hover {
-            background: #1d4ed8;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.35);
         }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:before {
+            font-size: 1.1rem;
+        }
+
+        .upload-box button:before {
+            content: "🔍";
+        }
+
+        /* Textareas */
         textarea {
             width: 100%;
             height: 180px;
-            padding: 10px;
+            padding: 18px;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-family: 'Inter', sans-serif;
+            color: #334155;
+            background: #f8fafc;
+            resize: vertical;
+            transition: all 0.3s;
         }
-        .section {
-            margin-top: 30px;
+
+        textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+            background: white;
         }
+
+        textarea::placeholder {
+            color: #94a3b8;
+        }
+
+        /* Grid Cards */
         .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
         }
+
         .card {
-            background: #f9fafb;
-            padding: 15px;
-            border-radius: 6px;
-            border: 1px solid #e5e7eb;
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s;
         }
+
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
+            border-color: #cbd5e1;
+        }
+
+        .card span {
+            font-weight: 600;
+            color: #1e293b;
+            float: right;
+            background: white;
+            padding: 4px 12px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        /* Price Box */
         .price-box {
-            display: flex;
-            gap: 15px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
         }
+
+        @media (max-width: 768px) {
+            .price-box {
+                grid-template-columns: 1fr;
+            }
+        }
+
         .price {
-            flex: 1;
-            padding: 15px;
+            padding: 25px 15px;
             text-align: center;
             font-weight: bold;
-            border-radius: 6px;
+            border-radius: 14px;
+            transition: transform 0.3s ease;
+            border: 2px solid transparent;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 120px;
         }
-        .below { background: #dcfce7; color: #166534; }
-        .average { background: #fef3c7; color: #92400e; }
-        .above { background: #fee2e2; color: #991b1b; }
+
+        .price:hover {
+            transform: translateY(-5px);
+        }
+
+        .price.below {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            color: #065f46;
+            border-color: #10b981;
+        }
+
+        .price.average {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            color: #92400e;
+            border-color: #f59e0b;
+        }
+
+        .price.above {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            color: #991b1b;
+            border-color: #ef4444;
+        }
+
+        .price br {
+            margin-bottom: 8px;
+        }
+
+        .price span {
+            font-size: 1.8rem;
+            margin-top: 8px;
+            display: block;
+            font-weight: 700;
+        }
+
+        /* Chatbot Button */
         .chatbot {
             text-align: center;
             margin-top: 30px;
+            padding: 30px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+            border: 1px solid #f1f5f9;
+        }
+
+        .chatbot a {
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .chatbot button {
+            padding: 16px 35px;
+            font-size: 1.1rem;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+        }
+
+        .chatbot button:hover {
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.35);
+        }
+
+        .chatbot button:before {
+            content: "🤖";
+        }
+
+        /* Analyzing Message */
+        #analyzingMessage {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        #analyzingMessage.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .analyzing-content {
+            text-align: center;
+            max-width: 400px;
+            padding: 40px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            border: 1px solid #f1f5f9;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid #e2e8f0;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 25px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .analyzing-content h3 {
+            font-size: 1.5rem;
+            color: #1e293b;
+            margin-bottom: 12px;
+        }
+
+        .analyzing-content p {
+            color: #64748b;
+            margin-bottom: 20px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+
+        .progress {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            border-radius: 4px;
+            animation: progress 2s ease-in-out infinite;
+        }
+
+        @keyframes progress {
+            0% { width: 0%; transform: translateX(0); }
+            50% { width: 100%; transform: translateX(0); }
+            100% { width: 100%; transform: translateX(100%); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .section {
+                padding: 20px;
+            }
+            
+            .grid {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 15px;
+            }
+            
+            .price {
+                padding: 20px 10px;
+            }
+            
+            .analyzing-content {
+                margin: 20px;
+                padding: 30px;
+            }
         }
     </style>
 </head>
 
 <body>
 
+<!-- Analyzing Message (initially hidden) -->
+<div id="analyzingMessage">
+    <div class="analyzing-content">
+        <div class="spinner"></div>
+        <h3>Analyzing Document</h3>
+        <p>Our AI is processing your loan/lease document to extract key details and provide insights...</p>
+        <div class="progress-bar">
+            <div class="progress"></div>
+        </div>
+    </div>
+</div>
+
 <header>
     <h1>AI Car Loan & Lease Analyzer</h1>
+    <p>Upload your car loan or lease document for AI-powered analysis and insights</p>
 </header>
 
 <main>
 
     <!-- Upload -->
-    <div class="upload-box">
+    <div class="section">
         <h2>Upload Loan / Lease Document</h2>
-        <form id="uploadForm">
-            <input type="file" name="file" id="fileInput" accept=".png,.jpg,.jpeg,.pdf" required>
-            <br>
-            <button type="submit">Analyze</button>
-        </form>
+        <div class="upload-box">
+            <form id="uploadForm">
+                <input type="file" name="file" id="fileInput" accept=".png,.jpg,.jpeg,.pdf" required>
+                <br>
+                <button type="submit">Analyze Document</button>
+            </form>
+        </div>
     </div>
 
     <!-- Summary -->
     <div class="section">
         <h2>Agreement Summary</h2>
-        <textarea id="summary" readonly></textarea>
+        <textarea id="summary" readonly placeholder="AI-generated summary will appear here..."></textarea>
     </div>
 
     <!-- Car Details -->
@@ -122,32 +492,37 @@
     <!-- Recalls -->
     <div class="section">
         <h2>Recalls Summary</h2>
-        <textarea id="recall_summary" readonly></textarea>
+        <textarea id="recall_summary" readonly placeholder="Vehicle recall information will appear here..."></textarea>
     </div>
 
     <!-- Market Prices -->
     <div class="section">
         <h2>Market Price Analysis</h2>
         <div class="price-box">
-            <div class="price below">Below Market<br>$<span id="below">—</span></div>
-            <div class="price average">Average Market<br>$<span id="average">—</span></div>
-            <div class="price above">Above Market<br>$<span id="above">—</span></div>
+            <div class="price below">Below Market<br><span id="below">—</span></div>
+            <div class="price average">Average Market<br><span id="average">—</span></div>
+            <div class="price above">Above Market<br><span id="above">—</span></div>
         </div>
     </div>
 
     <!-- Chatbot -->
     <div class="chatbot">
-        <button>
-            💬 Negotiate with AI
-        </button>
+        <a href="{{ url_for('chat') }}">
+            <button>Negotiate with AI Assistant</button>
+        </a>
     </div>
 
 </main>
 
 <script>
+// YOUR ORIGINAL JAVASCRIPT WITH ADDED ANALYZING MESSAGE
 document.getElementById("uploadForm").addEventListener("submit", async function(e) {
     e.preventDefault();
-
+    
+    // Show analyzing message
+    const analyzingMessage = document.getElementById("analyzingMessage");
+    analyzingMessage.classList.add("active");
+    
     const formData = new FormData();
     formData.append("file", document.getElementById("fileInput").files[0]);
 
@@ -158,6 +533,9 @@ document.getElementById("uploadForm").addEventListener("submit", async function(
 
     const res = await fetch("/process");
     const data = await res.json();
+    
+    // Hide analyzing message once data is received
+    analyzingMessage.classList.remove("active");
 
     document.getElementById("summary").value = data.summary || "";
 
@@ -173,9 +551,9 @@ document.getElementById("uploadForm").addEventListener("submit", async function(
     
 
     const price = data.market_price || {};
-    document.getElementById("below").innerText = price.below_market_price || "—";
-    document.getElementById("average").innerText = price.average_market_price || "—";
-    document.getElementById("above").innerText = price.above_market_price || "—";
+    document.getElementById("below").innerText = price.below_market_price ? "$" + price.below_market_price : "—";
+    document.getElementById("average").innerText = price.average_market_price ? "$" + price.average_market_price : "—";
+    document.getElementById("above").innerText = price.above_market_price ? "$" + price.above_market_price : "—";
 });
 </script>
 

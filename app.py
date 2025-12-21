@@ -7,6 +7,13 @@ import io
 import os
 import requests
 from groq import Groq
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_community.vectorstores import FAISS
+from langchain_community.embeddings import HuggingFaceBgeEmbeddings
+from langchain_core.documents import Document
+from langchain.memory import ConversationBufferMemory
+from langchain.chains import ConversationalRetrievalChain
+from langchain_groq import ChatGroq
 
 
 
@@ -15,7 +22,14 @@ app=Flask(__name__)
 
 pytesseract.pytesseract.tesseract_cmd = r"C:\Users\anisr\OneDrive\Desktop\bin\tesseract.exe"
 
-llm = Groq(api_key="groq_api_key")
+llm = Groq(api_key="groq_api")
+
+
+chat_llm= ChatGroq(
+    groq_api_key="groq_api",
+    model_name="llama-3.3-70b-versatile",
+    temperature=0
+)
 
 
 
@@ -29,6 +43,17 @@ ModelYear=""
 recall_summary=""
 market_values=""
 extracted_details=""
+prior_info=""
+memory = ConversationBufferMemory(
+    memory_key="chat_history",
+    return_messages=True
+)
+
+vector_db = None
+retriever=""
+
+
+
 
 def image_ocr(file):
     global final_text
@@ -60,7 +85,7 @@ def get_market_value(vin,mileage):
     querystring = {"vin":vin,"mileage":mileage}
 
     headers = {
-        "x-rapidapi-key": "vehicle_pricing_api_key",
+        "x-rapidapi-key": "your_api_key",
         "x-rapidapi-host": "vehicle-pricing-api.p.rapidapi.com"
     }
 
@@ -80,6 +105,7 @@ def get_market_value(vin,mileage):
         "sample_size": data["data"].get("count"),
         "price_period": data["data"].get("period")
     }
+   
 
 @app.route('/')
 def primary():
@@ -224,26 +250,85 @@ def recalls():
 def market_pred():
     
     global market_values
+    
     market_values = get_market_value(vin, mileage)
     
     return redirect(url_for("process"))
 
 
+@app.route("/chat")
+def chat():
+    return render_template("chat.html")
 
-@app.route("/process", methods=["POST","GET"])
+
+
+@app.route("/process", methods=["GET"])
 def process():
+    global prior_info, vectorstore
+
+    prior_info = f"""
+    Agreement Summary:
+    {summary_text}
+
+    Vehicle Details:
+    {extracted_details}
+
+    Recall Information:
+    {recall_summary}
+
+    Market Pricing:
+    {market_values}
+    """
+
+    documents = [Document(page_content=prior_info)]
+    chunks = RecursiveCharacterTextSplitter(
+        chunk_size=1000,
+        chunk_overlap=200
+    ).split_documents(documents)
+
+    embeddings = HuggingFaceBgeEmbeddings(
+        model_name="BAAI/bge-small-en-v1.5"
+    )
+    # After FAISS creation
+    global retriever
+    
+    
+    vectorstore = FAISS.from_documents(chunks, embeddings)
+    retriever = vectorstore.as_retriever(search_kwargs={"k": 4})
+
+        
     return jsonify({
         "summary": summary_text,
-        "car_details":extracted_details,
-        "recall_summary":recall_summary,
+        "car_details": extracted_details,
+        "recall_summary": recall_summary,
         "market_price": market_values
-        
     })
-    
-    
-@app.route("/chatbot")
-def chatbot():
-    return render_template("chat.html")
+
+@app.route("/chat_process", methods=["POST"])
+def chat_process():
+    user_question = request.form.get("user_question")
+
+    if not user_question:
+        return jsonify({"error": "Empty question"}), 400
+
+    conversation_chain = ConversationalRetrievalChain.from_llm(
+        llm=chat_llm,
+        retriever=vectorstore.as_retriever(),
+        memory=memory,
+        verbose=True
+    )
+
+    response = conversation_chain.invoke({"question": user_question})
+
+    return jsonify({
+        "chat_history": [
+            {"role": "user" if i % 2 == 0 else "bot", "text": msg.content}
+            for i, msg in enumerate(response["chat_history"])
+        ]
+    })
+
+
+
 
 if __name__ == "__main__":  
     app.run()

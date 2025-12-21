@@ -49,7 +49,6 @@ memory = ConversationBufferMemory(
     return_messages=True
 )
 
-vector_db = None
 retriever=""
 
 
@@ -334,3 +333,4 @@ if __name__ == "__main__":
     app.run()
     
     
+

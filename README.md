@@ -1,172 +1,97 @@
+                              AI / LLM-Based Car Lease Contract Review and Chatbot Assistant
 
-# AI / LLM-Based Car Lease Contract Review and Negotiation Assistant
+## Introduction
 
-## Project Overview
+Car lease agreements are often lengthy and difficult for common users to understand. Important details such as interest rates, penalties, and mileage limits are usually hidden inside complex legal language. This project aims to simplify that process by building an AI-based system that can automatically analyze car lease contracts, extract key information, identify potential risks, and explain the contract in simple language.  
 
-This project implements an **AI / LLM-based system** that automatically analyzes **car lease contracts** and helps users understand them easily.
-The system extracts important lease details, identifies risky clauses, suggests negotiation points, and generates a simple natural-language explanation using an **online open-source Large Language Model (LLM)**.
-
-The project is designed as part of an **internship / academic project** and strictly follows the requirements provided in the project description PDF.
+In addition to static analysis, the project also includes an interactive chatbot that allows users to ask questions about the analyzed contract and receive clear, context-aware answers.
 
 ---
 
-## Problem Statement
+## Project Objective
 
-Car lease contracts are often long, complex, and written in legal or financial language.
-Many users fail to identify unfavorable clauses such as high interest rates, penalties, or restrictive mileage limits.
-
-Manual contract review is time-consuming and error-prone.
-This project aims to automate the process and make car lease contracts **transparent and understandable** for users.
+The main objective of this project is to help users understand car lease contracts before signing them. The system focuses on contract understanding and negotiation assistance rather than vehicle valuation or price prediction. By combining OCR, rule-based extraction, and large language models, the project provides both structured outputs and human-readable explanations.
 
 ---
 
-## Objectives
+## Overall Working of the System
 
-* Extract key information from car lease contracts automatically
-* Identify risky or unfavorable clauses
-* Provide negotiation recommendations
-* Explain the contract in simple language using an LLM
-* Generate structured and reliable output for analysis
+The system begins by accepting a car lease contract in PDF format. The PDF may be text-based or scanned. Since OCR works on images, each page of the PDF is first converted into an image.
+
+Tesseract OCR is then used to extract text from these images. The extracted text from all pages is combined and cleaned so that it can be processed further. From this text, important lease-related details such as monthly payment, interest rate (APR), down payment, mileage allowance, residual value, and early termination fees are identified using rule-based extraction logic.
+
+Each extracted value is assigned a confidence score to indicate reliability. The system then checks the extracted information to identify potentially risky terms, such as high interest rates, high penalties, or low mileage limits. Based on these findings, negotiation suggestions are generated to help the user understand what aspects of the contract can be discussed with the dealer.
+
+To make the output user-friendly, the extracted data is passed to an open-source Large Language Model (LLM) through the Groq API. The LLM generates a simple explanation of the contract, highlights risks, and summarizes negotiation advice in natural language.
 
 ---
 
-## System Workflow
+## Chatbot Functionality
 
-The project follows a step-by-step pipeline:
+After the contract analysis is completed, users can interact with the system through a chatbot. The chatbot answers questions strictly based on the analyzed contract data and does not rely on external sources or assumptions.
 
-1. **PDF Ingestion**
+The chatbot has been enhanced with intent-aware response handling. It understands whether a user is asking for a summary, risk explanation, negotiation advice, or clarification of a specific clause. This allows the chatbot to tailor its response style according to the user’s question.
 
-   * Accepts car lease contracts in PDF format
-   * Supports multi-page and scanned documents
+Additionally, the chatbot maintains short-term conversation memory. It remembers recent questions and answers so that follow-up questions such as “Why is that risky?” can be answered correctly with proper context.
 
-2. **OCR (Optical Character Recognition)**
+---
 
-   * Converts PDF pages into images
-   * Extracts text using **Tesseract OCR** (open-source)
+## Output of the System
 
-3. **Text Preprocessing**
-
-   * Combines and cleans OCR text
-   * Prepares text for analysis
-
-4. **Key Information Extraction**
-
-   * Extracts:
-
-     * Interest Rate (APR)
-     * Monthly Payment
-     * Down Payment
-     * Residual Value
-     * Mileage Allowance
-     * VIN
-     * Early Termination Fee
-     * Contact Information (Email / Phone)
-
-5. **Confidence Scoring**
-
-   * Assigns confidence scores to extracted fields
-
-6. **Risk Identification**
-
-   * Detects risky terms such as:
-
-     * High APR
-     * High penalties
-     * Low mileage limits
-
-7. **Negotiation Recommendation**
-
-   * Suggests what the user should negotiate based on risks
-
-8. **LLM-Based Explanation**
-
-   * Uses an **online open-source LLM via Groq API**
-   * Generates a human-readable explanation of the contract
-   * Explains risks and negotiation advice in simple language
-
-9. **Structured Output**
-
-   * Saves results in JSON format
+The final output of the system consists of a structured JSON file containing extracted contract details, confidence scores, identified risks, and negotiation suggestions. Along with this, the chatbot provides interactive, plain-language explanations of the contract that are easy for non-technical users to understand.
 
 ---
 
 ## Technologies Used
 
-* **Programming Language:** Python
-* **OCR Engine:** Tesseract OCR
-* **PDF Processing:** pdf2image, Pillow
-* **LLM API:** Groq Free Inference API
-* **LLM Model:** LLaMA-3.3-70B-Versatile (Text-to-Text)
-* **Data Format:** JSON
+The project is implemented using Python. Tesseract OCR is used for text extraction from scanned documents. PDF2Image and Pillow are used for PDF-to-image conversion and image handling. Flask is used to create a simple web-based chatbot interface. The Groq API is used to access an open-source LLM for explanation and chatbot responses. JSON is used to store structured outputs.
 
 ---
 
 ## Project Structure
 
-```
-project-folder/
-│
-├── contract_extractor.py      # Main pipeline (OCR → extraction → negotiation → LLM)
-├── llm_groq.py                # Groq API integration
-├── test_pdf_to_img.py         # PDF to image conversion
-├── page_0.png                 # OCR input images
-├── page_1.png
-├── extracted_contract.json    # Final output
-├── README.md                  # Project documentation
-```
-
----
-
-## Dataset Description
-
-Due to privacy and legal restrictions, real signed car lease contracts are not publicly available.
-
-For this project:
-
-* Publicly available lease templates were used
-* Synthetic but realistic car lease contracts were generated
-* Contract formats follow real-world lease agreements
-
-This approach is widely accepted in academic and internship projects.
-
----
-
-## Output Description
-
-The system produces a structured JSON output containing:
-
-* Extracted contract fields
-* Confidence scores
-* Identified risks
-* Negotiation suggestions
-* LLM-generated natural-language explanation
+├── contract_extractor.py      # OCR and contract information extraction
+├── chatbot.py                 # Chatbot logic with intent detection and memory
+├── run_chatbot.py             # Terminal-based chatbot interface
+├── app.py                     # Web-based chatbot using Flask
+├── test_pdf_to_img.py         # PDF to image conversion script
+├── test_ocr.py                # OCR testing script
+├── extracted_contract.json    # Extracted contract output
+├── sample_datasets/           # Sample lease contract PDFs
+├── templates/
+│   └── index.html             # Chatbot web interface
+├── README.md
+├── .gitignore
 
 ---
 
 ## How to Run the Project
 
-1. Place the car lease PDF in the project folder
-2. Convert PDF pages to images using `test_pdf_to_img.py`
-3. Ensure `page_0.png`, `page_1.png`, etc. are generated
-4. Add your **Groq API key** in `llm_groq.py`
-5. Run the main pipeline:
+First, all required Python dependencies must be installed. Tesseract OCR should also be installed and properly added to the system PATH.
 
-   ```
-   python contract_extractor.py
-   ```
-6. View the output in `extracted_contract.json`
+After installation, the contract extraction process can be executed to generate the structured output. Once the contract data is extracted, the chatbot can be run either through the terminal or via a simple web interface using Flask.
 
 ---
 
-## Project Status
+## Real-World Use Case
 
-✅ All modules specified in the project description have been implemented
-✅ The system has been tested using sample lease contracts
-✅ The project is **fully completed as per the provided PDF**
+In a real-world scenario, a customer receives a car lease agreement from a dealer and is unsure about the terms. By uploading the contract to this system, the customer can quickly understand the key details, identify risks, and receive negotiation advice. The chatbot further allows the customer to ask specific questions about the contract without having to read the entire document.
 
 ---
 
-## Conclusion
+## Scope Clarification
 
-This project demonstrates how OCR, rule-based extraction, and online open-source LLMs can be combined to automate contract analysis.
-The system improves transparency, reduces manual effort, and helps users make informed decisions before signing a car lease contract.
+This project focuses on analyzing and explaining the contents of a car lease contract. It does not predict vehicle prices, calculate market depreciation, or replace legal professionals. The system is intended as an assistance tool to improve contract understanding and decision-making.
+
+---
+
+## Future Enhancements
+
+Future improvements may include support for additional contract types, enhanced user interfaces, comparison between multiple contracts, and more advanced risk scoring mechanisms.
+
+---
+
+## Author
+
+Rohith V  
+B.Tech – Computer Science (AI & ML)

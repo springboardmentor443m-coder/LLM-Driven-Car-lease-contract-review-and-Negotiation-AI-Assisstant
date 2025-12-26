@@ -1,0 +1,13 @@
+flask
+requests
+python-dotenv
+pillow
+pytesseract
+pymupdf
+groq
+langchain
+langchain-community
+langchain-groq
+langchain-text-splitters
+sentence-transformers
+chromadb

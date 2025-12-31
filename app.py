@@ -7,6 +7,7 @@ import io
 import os
 import requests
 from groq import Groq
+
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import HuggingFaceBgeEmbeddings
@@ -14,6 +15,8 @@ from langchain_core.documents import Document
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
 from langchain_groq import ChatGroq
+from langchain.prompts import PromptTemplate
+
 
 
 
@@ -22,11 +25,11 @@ app=Flask(__name__)
 
 pytesseract.pytesseract.tesseract_cmd = r"C:\Users\anisr\OneDrive\Desktop\bin\tesseract.exe"
 
-llm = Groq(api_key="groq_api")
+llm = Groq(api_key="api_key")
 
 
 chat_llm= ChatGroq(
-    groq_api_key="groq_api",
+    groq_api_key="api_key",
     model_name="llama-3.3-70b-versatile",
     temperature=0
 )
@@ -280,20 +283,21 @@ def process():
     """
 
     documents = [Document(page_content=prior_info)]
+    
     chunks = RecursiveCharacterTextSplitter(
         chunk_size=1000,
         chunk_overlap=200
     ).split_documents(documents)
 
+
     embeddings = HuggingFaceBgeEmbeddings(
         model_name="BAAI/bge-small-en-v1.5"
     )
-    # After FAISS creation
+  
     global retriever
     
     
     vectorstore = FAISS.from_documents(chunks, embeddings)
-    retriever = vectorstore.as_retriever(search_kwargs={"k": 4})
 
         
     return jsonify({
@@ -303,6 +307,9 @@ def process():
         "market_price": market_values
     })
 
+
+
+
 @app.route("/chat_process", methods=["POST"])
 def chat_process():
     user_question = request.form.get("user_question")
@@ -310,27 +317,49 @@ def chat_process():
     if not user_question:
         return jsonify({"error": "Empty question"}), 400
 
+   
+    qa_prompt = PromptTemplate(
+        input_variables=["context", "question"],
+        template="""
+You are an intelligent vehicle contract assistant.
+
+Use the CONTEXT below to answer the QUESTION.
+If the answer is NOT present in the context, 
+then answer using your general knowledge clearly.
+
+CONTEXT:
+{context}
+
+QUESTION:
+{question}
+
+ANSWER:
+"""
+    )
+
     conversation_chain = ConversationalRetrievalChain.from_llm(
         llm=chat_llm,
-        retriever=vectorstore.as_retriever(),
+        retriever=vectorstore.as_retriever(search_kwargs={"k": 4}),
         memory=memory,
-        verbose=True
+        combine_docs_chain_kwargs={
+            "prompt": qa_prompt
+        },
+        verbose=False  # turn True only for debugging
     )
 
     response = conversation_chain.invoke({"question": user_question})
 
     return jsonify({
+        "answer": response["answer"],
         "chat_history": [
-            {"role": "user" if i % 2 == 0 else "bot", "text": msg.content}
+            {"role": "user" if i % 2 == 0 else "assistant", "text": msg.content}
             for i, msg in enumerate(response["chat_history"])
         ]
     })
 
-
+    
 
 
 if __name__ == "__main__":  
     app.run()
     
-    
-

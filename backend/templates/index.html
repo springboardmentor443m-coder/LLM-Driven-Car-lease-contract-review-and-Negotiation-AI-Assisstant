@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Car Contract AI Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <!-- Styles (unchanged theme) -->
+  <style>
+    :root {
+      --primary:#0ea5e9;
+      --accent:#8b5cf6;
+      --bg-dark:#0f172a;
+      --card-bg:rgba(15,23,42,.75);
+      --text:#f8fafc;
+      --muted:#94a3b8;
+      --success:#10b981;
+      --warning:#f59e0b;
+      --danger:#ef4444;
+      --radius:16px;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Inter,sans-serif;
+      color:var(--text);
+      background:url("https://images.unsplash.com/photo-1617788138017-80ad40651399") center/cover fixed;
+    }
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      background:rgba(15,23,42,.88);
+      z-index:-1;
+    }
+
+    header{
+      padding:1rem 2rem;
+      background:rgba(15,23,42,.95);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      border-bottom:1px solid rgba(255,255,255,.1);
+    }
+
+    .brand{
+      font-family:"Exo 2";
+      font-size:1.4rem;
+      font-weight:700;
+      background:linear-gradient(90deg,#38bdf8,#818cf8);
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      display:flex;
+      align-items:center;
+      gap:.6rem;
+    }
+
+    main{
+      max-width:1200px;
+      margin:auto;
+      padding:2rem;
+      display:grid;
+      grid-template-columns:repeat(12,1fr);
+      gap:1.5rem;
+    }
+
+    .box{
+      grid-column:span 12;
+      background:var(--card-bg);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:var(--radius);
+      padding:1.5rem;
+      backdrop-filter:blur(12px);
+      box-shadow:0 10px 40px rgba(0,0,0,.4);
+    }
+
+    h2{
+      margin:0 0 1rem;
+      font-family:"Exo 2";
+      display:flex;
+      align-items:center;
+      gap:.5rem;
+      border-bottom:1px solid rgba(255,255,255,.1);
+      padding-bottom:.5rem;
+    }
+
+    button{
+      background:linear-gradient(135deg,var(--primary),var(--accent));
+      border:none;
+      color:white;
+      padding:.6rem 1.4rem;
+      border-radius:8px;
+      font-weight:600;
+      cursor:pointer;
+    }
+
+    button.secondary{
+      background:transparent;
+      border:1px solid rgba(255,255,255,.3);
+    }
+
+    input,textarea{
+      width:100%;
+      background:rgba(0,0,0,.35);
+      border:1px solid rgba(255,255,255,.1);
+      border-radius:8px;
+      padding:.7rem;
+      color:white;
+      font-family:inherit;
+    }
+
+    textarea{resize:vertical}
+
+    pre{
+      background:black;
+      color:#4ade80;
+      padding:1rem;
+      border-radius:8px;
+      overflow:auto;
+      min-height:70px;
+    }
+
+    .grid-6{grid-column:span 6}
+    .grid-12{grid-column:span 12}
+
+    @media(max-width:900px){
+      main{display:flex;flex-direction:column}
+    }
+  </style>
+
+  <!-- REAL BACKEND SCRIPT -->
+  <script src="/static/script.js" defer></script>
+</head>
+
+<body>
+
+<header>
+  <div class="brand">
+    <i class="fa-solid fa-car"></i> AutoAI Nexus
+  </div>
+  <div style="color:var(--muted)">
+    <i class="fa-solid fa-shield-halved"></i> Secure AI Session
+  </div>
+</header>
+
+<main>
+
+  <!-- Upload -->
+  <div class="box">
+    <h2>📄 Upload Contract</h2>
+    <input type="file" id="fileInput" />
+    <br><br>
+    <button onclick="uploadContract()">Upload</button>
+    <div id="contractIdText" style="margin-top:10px;color:var(--success)"></div>
+  </div>
+
+  <!-- SLA -->
+  <div class="box grid-6">
+    <h2>📊 SLA Extraction</h2>
+    <button onclick="extractSLA()">Extract SLA</button>
+    <pre id="slaResult"></pre>
+  </div>
+
+  <!-- Vehicle -->
+  <div class="box grid-6">
+    <h2>🚗 Vehicle Intelligence</h2>
+    <button onclick="getVehicle()">Analyze Vehicle</button>
+    <pre id="vehicleResult"></pre>
+  </div>
+
+  <!-- Fairness -->
+  <div class="box">
+    <h2>⚖️ Contract Fairness</h2>
+    <button onclick="getFairness()">Analyze Fairness</button>
+    <div style="display:flex;gap:2rem;margin-top:1rem">
+      <div>
+        <h3 id="fairnessScore">--</h3>
+        <small>Fairness Score</small>
+      </div>
+      <div>
+        <h3 id="riskLevel">--</h3>
+        <small>Risk Level</small>
+      </div>
+    </div>
+    <pre id="fairnessResult"></pre>
+  </div>
+
+  <!-- Chatbot -->
+  <div class="box">
+    <h2>🤖 AI Contract Chatbot</h2>
+    <textarea id="chatInput" rows="3" placeholder="Ask about risks, penalties, negotiation..."></textarea>
+    <br><br>
+    <button onclick="chat()">Ask</button>
+    <pre id="chatResult"></pre>
+  </div>
+
+  <!-- Report -->
+  <div class="box">
+    <h2>📥 Contract Report</h2>
+    <button class="secondary" onclick="downloadReport()">
+      <i class="fa-solid fa-file-pdf"></i> Download PDF
+    </button>
+  </div>
+
+</main>
+
+</body>
+</html>

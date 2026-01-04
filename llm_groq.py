@@ -1,49 +1,41 @@
 import requests
-import json
+import os
+from dotenv import load_dotenv
+import os
 
-# 🔑 Paste your Groq API key here
-GROQ_API_KEY = "ENTER YOUR API KEY"
+load_dotenv()  # loads .env file
+
+# Read key from environment (safer than hardcoding)
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
+MODEL = "llama-3.3-70b-versatile"
 
-def generate_llm_explanation_groq(contract_json: dict) -> str:
-    """
-    Sends extracted contract data to Groq LLM
-    and returns a natural language explanation.
-    """
 
-    prompt = f"""
-You are an AI assistant that explains car lease contracts in simple language.
-
-Explain the following contract by covering:
-1. Key terms
-2. Risks involved
-3. Negotiation advice
-
-Contract Data:
-{json.dumps(contract_json, indent=2)}
-
-Explain clearly for a normal user.
-"""
-
+def call_groq(prompt: str) -> str:
     headers = {
         "Authorization": f"Bearer {GROQ_API_KEY}",
         "Content-Type": "application/json"
     }
 
     payload = {
-        "model": "llama-3.3-70b-versatile",
+        "model": MODEL,
         "messages": [
-            {"role": "system", "content": "You explain legal contracts clearly."},
+            {
+                "role": "system",
+                "content": (
+                    "You are an expert in car lease contracts, finance, and negotiation. "
+                    "Explain contracts clearly and professionally."
+                )
+            },
             {"role": "user", "content": prompt}
         ],
-        "temperature": 0.4
+        "temperature": 0.3
     }
 
-    response = requests.post(GROQ_URL, headers=headers, json=payload)
+    response = requests.post(GROQ_URL, headers=headers, json=payload, timeout=30)
 
     if response.status_code != 200:
-        raise RuntimeError(f"Groq API error: {response.text}")
+        return f"Groq error: {response.text}"
 
     return response.json()["choices"][0]["message"]["content"]
-

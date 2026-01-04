@@ -1,74 +1,54 @@
 import json
-import requests
-
-GROQ_API_KEY = "ENTER YOUR API KEY HERE"
-GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
-MODEL_NAME = "llama-3.3-70b-versatile"  # use exact available model
-
-def detect_intent(user_question):
-    q = user_question.lower()
-
-    if any(word in q for word in ["risk", "danger", "problem", "penalty", "unsafe"]):
-        return "risk"
-    elif any(word in q for word in ["negotiate", "reduce", "lower", "bargain"]):
-        return "negotiation"
-    elif any(word in q for word in ["explain", "summary", "overview"]):
-        return "summary"
-    elif any(word in q for word in ["mileage", "payment", "interest", "fee", "termination"]):
-        return "clause"
-    else:
-        return "general"
+from llm_groq import call_groq
 
 
-def contract_chatbot(user_question, contract_data, chat_history):
-    intent = detect_intent(user_question)
+def load_json(path: str) -> dict:
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
 
-    intent_instruction = {
-        "risk": "Focus on risks and explain why they are risky.",
-        "negotiation": "Focus on what the user can negotiate and how.",
-        "summary": "Give a simple overall explanation of the contract.",
-        "clause": "Explain the specific clause clearly.",
-        "general": "Answer clearly based on the contract data."
-    }
 
-    prompt = f"""
-You are a car lease contract assistant chatbot.
+def build_prompt(contract_data: dict, explanation_data: dict, user_question: str) -> str:
+    return f"""
+You are an expert in car lease contracts, finance, and negotiation.
 
-Rules:
-- Answer ONLY using the contract data.
-- If information is missing, say "This information is not mentioned in the contract."
-- Explain in simple language.
-
-Conversation History:
-{chat_history}
-
-Contract Data:
+Below is the extracted contract data:
 {json.dumps(contract_data, indent=2)}
+
+Below is an expert explanation of the contract:
+{json.dumps(explanation_data, indent=2)}
+
+RULES:
+- Answer ONLY using the information above.
+- If something is not mentioned, say clearly that it is not specified.
+- Be clear, professional, and practical.
 
 User Question:
 {user_question}
 
-Special Instruction:
-{intent_instruction[intent]}
-
 Answer:
 """
 
-    headers = {
-        "Authorization": f"Bearer {GROQ_API_KEY}",
-        "Content-Type": "application/json"
-    }
 
-    payload = {
-        "model": MODEL_NAME,
-        "messages": [
-            {"role": "system", "content": "You explain car lease contracts clearly and honestly."},
-            {"role": "user", "content": prompt}
-        ],
-        "temperature": 0.3
-    }
+def run_chatbot():
+    print("📄 Loading contract data...")
+    contract_data = load_json("extracted_contract.json")
+    explanation_data = load_json("llm_explanation.json")
 
-    response = requests.post(GROQ_URL, headers=headers, json=payload)
-    response.raise_for_status()
+    print("🤖 Car Lease Contract Chatbot")
+    print("Type 'exit' to quit.\n")
 
-    return response.json()["choices"][0]["message"]["content"]
+    while True:
+        user_question = input("You: ").strip()
+
+        if user_question.lower() == "exit":
+            print("Goodbye 👋")
+            break
+
+        prompt = build_prompt(contract_data, explanation_data, user_question)
+        answer = call_groq(prompt)
+
+        print("\nBot:", answer, "\n")
+
+
+if __name__ == "__main__":
+    run_chatbot()

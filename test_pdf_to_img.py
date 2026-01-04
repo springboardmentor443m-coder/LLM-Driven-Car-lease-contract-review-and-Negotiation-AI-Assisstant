@@ -1,6 +1,6 @@
 from pdf2image import convert_from_path
 
-pdf_path = r"E:\INFOSYS_INTERNSHIP\sample1.pdf"
+pdf_path = r"E:\INFOSYS_INTERNSHIP2\sample1.pdf"
 
 pages = convert_from_path(
     pdf_path,

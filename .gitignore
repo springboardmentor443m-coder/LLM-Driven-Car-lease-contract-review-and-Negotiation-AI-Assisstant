@@ -1,0 +1,54 @@
+#################################
+# Node / Frontend
+#################################
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+#################################
+# Python / Backend
+#################################
+venv/
+env/
+ENV/
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+
+#################################
+# Environment Variables
+#################################
+.env
+.env.*
+!.env.example
+
+#################################
+# Build / Cache
+#################################
+dist/
+build/
+*.log
+.cache/
+
+#################################
+# IDE / Editor
+#################################
+.vscode/
+.idea/
+*.swp
+*.swo
+
+#################################
+# OS files
+#################################
+.DS_Store
+Thumbs.db
+desktop.ini
+
+#################################
+# Git internal safety (optional)
+#################################
+*.lock

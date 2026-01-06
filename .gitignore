@@ -1,0 +1,63 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.DS_Store
+
+# Virtual environments
+venv/
+.env
+backend/.env
+
+# Streamlit secrets
+web_ui/.streamlit/secrets.toml
+
+# Build
+dist/
+build/
+
+# Byte-compiled
+*.egg-info/
+
+# OS files
+Thumbs.db
+
+# PDFs / uploads
+uploads/
+samples/
+venv/
+__pycache__/
+*.pyc
+*.env
+*.log
+
+mobile_app/node_modules/
+mobile_app/.expo/
+mobile_app/.expo-shared/
+mobile_app/.gradle/
+mobile_app/.idea/
+mobile_app/.vscode/
+mobile_app/android/
+mobile_app/ios/
+
+.DS_Store
+Thumbs.db
+# Python
+venv/
+__pycache__/
+*.pyc
+
+# Streamlit
+.streamlit/
+
+# Mobile App
+mobile_app/node_modules/
+mobile_app/android/
+mobile_app/ios/
+mobile_app/.expo/
+mobile_app/.expo-shared/
+
+# System
+.DS_Store
+Thumbs.db

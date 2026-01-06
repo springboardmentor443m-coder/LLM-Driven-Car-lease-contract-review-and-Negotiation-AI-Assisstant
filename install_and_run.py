@@ -1,20 +1,5 @@
+
 import streamlit as st
-
-st.set_page_config(layout="wide")
-
-st.write("STREAMLIT IS RUNNING")
-
-st.markdown("""
-<style>
-html, body, [class*="stApp"] {
-    background-color: #ff0000 !important;
-}
-</style>
-""", unsafe_allow_html=True)
-
-st.write("IF YOU SEE RED BACKGROUND → CSS WORKS")
-
-
 
 import sys
 import subprocess
@@ -57,6 +42,129 @@ st.set_page_config(
 # ====================================================
 # CUSTOM CSS
 # ====================================================
+st.markdown("""
+<style>
+
+/* ===== GLOBAL BACKGROUND ===== */
+html, body, [data-testid="stAppViewContainer"] {
+    background: linear-gradient(180deg, #F8FAFF, #EEF2FF);
+    color: #1E293B;
+    font-family: "Segoe UI", sans-serif;
+}
+
+/* ===== SIDEBAR ===== */
+[data-testid="stSidebar"] {
+    background: linear-gradient(180deg, #DBEAFE, #EFF6FF);
+}
+[data-testid="stSidebar"] * {
+    color: #1E293B !important;
+}
+
+/* ===== HEADINGS ===== */
+h1 {
+    color: #1D4ED8 !important;
+    font-weight: 800;
+}
+h2 {
+    color: #2563EB !important;
+}
+h3, h4 {
+    color: #1E293B !important;
+}
+
+/* ===== NORMAL TEXT ===== */
+p, span, label, li {
+    color: #1E293B !important;
+    font-size: 15px;
+}
+
+/* ===== METRIC BOXES ===== */
+[data-testid="metric-container"] {
+    background-color: #FFFFFF;
+    border-radius: 14px;
+    padding: 18px;
+    border: 1px solid #E5E7EB;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+}
+[data-testid="metric-container"] * {
+    color: #1E293B !important;
+    font-weight: 600;
+}
+
+/* ===== TABS ===== */
+button[data-baseweb="tab"] {
+    background-color: #E0E7FF;
+    color: #1E293B !important;
+    font-weight: 600;
+    border-radius: 10px;
+    margin-right: 6px;
+}
+button[data-baseweb="tab"][aria-selected="true"] {
+    background-color: #2563EB !important;
+    color: #FFFFFF !important;
+}
+
+/* ===== CONTENT CARDS ===== */
+.result-card {
+    background-color: #FFFFFF;
+    color: #1E293B;
+    border-left: 6px solid #3B82F6;
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 18px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+}
+
+/* ===== RECALL WARNINGS ===== */
+.recall-card {
+    background-color: #FEFCE8;
+    color: #854D0E;
+    border-left: 6px solid #FACC15;
+    border-radius: 12px;
+    padding: 15px;
+}
+.recall-card.critical {
+    background-color: #FEF2F2;
+    color: #7F1D1D;
+    border-left: 6px solid #EF4444;
+}
+
+/* ===== BUTTONS ===== */
+.stButton > button {
+    background: linear-gradient(90deg, #2563EB, #60A5FA);
+    color: #FFFFFF;
+    font-weight: 700;
+    border-radius: 12px;
+    padding: 10px 18px;
+    border: none;
+}
+.stButton > button:hover {
+    background: linear-gradient(90deg, #1D4ED8, #3B82F6);
+}
+
+/* ===== FILE UPLOADER ===== */
+[data-testid="stFileUploader"] {
+    background-color: #FFFFFF;
+    border: 2px dashed #93C5FD;
+    padding: 22px;
+    border-radius: 14px;
+    color: #1E293B;
+}
+
+/* ===== CHAT MESSAGES ===== */
+[data-testid="stChatMessage"] {
+    background-color: #FFFFFF;
+    border-radius: 14px;
+    padding: 14px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.05);
+    color: #1E293B;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
+
+
 st.markdown("""
 <style>
     .main-header {

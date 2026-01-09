@@ -26,3 +26,21 @@ pre {
   padding: 10px;
   border-radius: 5px;
 }
+
+/* -------- Contract Insights (Pros & Cons) -------- */
+
+#fairnessResult {
+  background: #020617;
+  color: #e5e7eb;
+  font-family: "Courier New", monospace;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+#fairnessResult code {
+  white-space: pre-wrap;
+}
+
+#fairnessResult strong {
+  color: #38bdf8;
+}

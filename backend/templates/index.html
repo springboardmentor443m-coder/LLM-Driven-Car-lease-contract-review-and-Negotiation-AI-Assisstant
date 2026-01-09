@@ -11,7 +11,6 @@
   <!-- Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-  <!-- Styles (unchanged theme) -->
   <style>
     :root {
       --primary:#0ea5e9;
@@ -26,13 +25,15 @@
       --radius:16px;
     }
 
-    *{box-sizing:border-box}
-    body{
+    * { box-sizing: border-box; }
+
+    body {
       margin:0;
       font-family:Inter,sans-serif;
       color:var(--text);
       background:url("https://images.unsplash.com/photo-1617788138017-80ad40651399") center/cover fixed;
     }
+
     body::before{
       content:"";
       position:fixed;
@@ -62,17 +63,18 @@
       gap:.6rem;
     }
 
+    /* ✅ FIXED LAYOUT */
     main{
       max-width:1200px;
       margin:auto;
       padding:2rem;
-      display:grid;
-      grid-template-columns:repeat(12,1fr);
+      display:flex;
+      flex-direction:column;
       gap:1.5rem;
     }
 
     .box{
-      grid-column:span 12;
+      width:100%;
       background:var(--card-bg);
       border:1px solid rgba(255,255,255,.08);
       border-radius:var(--radius);
@@ -106,7 +108,7 @@
       border:1px solid rgba(255,255,255,.3);
     }
 
-    input,textarea{
+    input, textarea{
       width:100%;
       background:rgba(0,0,0,.35);
       border:1px solid rgba(255,255,255,.1);
@@ -116,7 +118,7 @@
       font-family:inherit;
     }
 
-    textarea{resize:vertical}
+    textarea{ resize:vertical }
 
     pre{
       background:black;
@@ -125,13 +127,7 @@
       border-radius:8px;
       overflow:auto;
       min-height:70px;
-    }
-
-    .grid-6{grid-column:span 6}
-    .grid-12{grid-column:span 12}
-
-    @media(max-width:900px){
-      main{display:flex;flex-direction:column}
+      margin-top:1rem;
     }
   </style>
 
@@ -162,34 +158,24 @@
   </div>
 
   <!-- SLA -->
-  <div class="box grid-6">
+  <div class="box">
     <h2>📊 SLA Extraction</h2>
     <button onclick="extractSLA()">Extract SLA</button>
-    <pre id="slaResult"></pre>
+    <pre id="slaResult">Waiting for SLA extraction…</pre>
   </div>
 
   <!-- Vehicle -->
-  <div class="box grid-6">
+  <div class="box">
     <h2>🚗 Vehicle Intelligence</h2>
     <button onclick="getVehicle()">Analyze Vehicle</button>
-    <pre id="vehicleResult"></pre>
+    <pre id="vehicleResult">No vehicle data yet</pre>
   </div>
 
-  <!-- Fairness -->
+  <!-- Contract Insights (Pros & Cons) -->
   <div class="box">
-    <h2>⚖️ Contract Fairness</h2>
-    <button onclick="getFairness()">Analyze Fairness</button>
-    <div style="display:flex;gap:2rem;margin-top:1rem">
-      <div>
-        <h3 id="fairnessScore">--</h3>
-        <small>Fairness Score</small>
-      </div>
-      <div>
-        <h3 id="riskLevel">--</h3>
-        <small>Risk Level</small>
-      </div>
-    </div>
-    <pre id="fairnessResult"></pre>
+    <h2>⚖️ Contract Insights (Pros & Cons)</h2>
+    <button onclick="getFairness()">Analyze Contract</button>
+    <pre id="fairnessResult">Insights will appear here</pre>
   </div>
 
   <!-- Chatbot -->
@@ -198,7 +184,7 @@
     <textarea id="chatInput" rows="3" placeholder="Ask about risks, penalties, negotiation..."></textarea>
     <br><br>
     <button onclick="chat()">Ask</button>
-    <pre id="chatResult"></pre>
+    <pre id="chatResult">Chat responses appear here</pre>
   </div>
 
   <!-- Report -->

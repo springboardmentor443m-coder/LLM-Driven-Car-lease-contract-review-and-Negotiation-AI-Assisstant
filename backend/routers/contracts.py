@@ -17,7 +17,7 @@ router = APIRouter(prefix="/contracts", tags=["contracts"])
 
 
 # ======================================================
-# PHASE 3: Contract Upload
+# PHASE 3: CONTRACT UPLOAD
 # ======================================================
 @router.post("/upload", response_model=ContractResponse, status_code=status.HTTP_201_CREATED)
 async def upload_contract(
@@ -53,7 +53,7 @@ async def upload_contract(
 
 
 # ======================================================
-# PHASE 4: SLA Extraction
+# PHASE 4: SLA EXTRACTION
 # ======================================================
 @router.post("/{contract_id}/extract-sla")
 def extract_sla_for_contract(contract_id: int, db: Session = Depends(get_db)):
@@ -68,23 +68,24 @@ def extract_sla_for_contract(contract_id: int, db: Session = Depends(get_db)):
         sla = SLAExtraction(contract_id=contract.id)
         db.add(sla)
 
-    # Explicit & safe updates
-    sla.apr = sla_data["apr"]
-    sla.lease_term = sla_data["lease_term"]
-    sla.monthly_payment = sla_data["monthly_payment"]
-    sla.mileage_limit = sla_data["mileage_limit"]
-    sla.early_termination = sla_data["early_termination"]
-    sla.penalties = sla_data["penalties"]
-    sla.fairness_score = sla_data["fairness_score"]
+    sla.apr = sla_data.get("apr")
+    sla.lease_term = sla_data.get("lease_term")
+    sla.monthly_payment = sla_data.get("monthly_payment")
+    sla.mileage_limit = sla_data.get("mileage_limit")
+    sla.early_termination = sla_data.get("early_termination")
+    sla.penalties = sla_data.get("penalties")
 
     db.commit()
     db.refresh(sla)
 
-    return {"contract_id": contract.id, "sla": sla_data}
+    return {
+        "contract_id": contract.id,
+        "sla": sla_data
+    }
 
 
 # ======================================================
-# PHASE 5: Vehicle Intelligence
+# PHASE 5: VEHICLE INTELLIGENCE
 # ======================================================
 @router.get("/{contract_id}/vehicle-info")
 def get_vehicle_info(contract_id: int, db: Session = Depends(get_db)):
@@ -133,7 +134,6 @@ def get_contracts(db: Session = Depends(get_db)):
                     "mileage_limit": sla.mileage_limit,
                     "early_termination": sla.early_termination,
                     "penalties": sla.penalties,
-                    "fairness_score": sla.fairness_score
                 } if sla else None
             )
         )
@@ -142,10 +142,10 @@ def get_contracts(db: Session = Depends(get_db)):
 
 
 # ======================================================
-# PHASE 6: FAIRNESS SCORE (IMPORTANT FIX ✅)
+# PHASE 6: PROS & CONS ANALYSIS (NEW ✅)
 # ======================================================
-@router.get("/{contract_id}/fairness-score")
-def get_fairness_score(contract_id: int, db: Session = Depends(get_db)):
+@router.get("/{contract_id}/fairness")
+def get_contract_analysis(contract_id: int, db: Session = Depends(get_db)):
     contract = db.query(Contract).filter_by(id=contract_id).first()
     if not contract or not contract.sla_extraction:
         raise HTTPException(404, "Contract or SLA not found")
@@ -158,13 +158,14 @@ def get_fairness_score(contract_id: int, db: Session = Depends(get_db)):
         "monthly_payment": sla.monthly_payment,
         "mileage_limit": sla.mileage_limit,
         "early_termination": sla.early_termination,
-        "penalties": sla.penalties,
-        "fairness_score": sla.fairness_score
+        "penalties": sla.penalties
     }
+
+    analysis = evaluate_contract_fairness(sla_dict)
 
     return {
         "contract_id": contract.id,
-        **evaluate_contract_fairness(sla_dict)
+        **analysis
     }
 
 
@@ -182,13 +183,12 @@ def chat_with_contract(contract_id: int, question: str, db: Session = Depends(ge
     sla = contract.sla_extraction
 
     sla_dict = {
-        "apr": float(sla.apr or 0),
-        "lease_term": int(sla.lease_term or 0),
-        "monthly_payment": float(sla.monthly_payment or 0),
-        "mileage_limit": int(sla.mileage_limit or 0),
+        "apr": sla.apr,
+        "lease_term": sla.lease_term,
+        "monthly_payment": sla.monthly_payment,
+        "mileage_limit": sla.mileage_limit,
         "early_termination": sla.early_termination or "Unknown",
         "penalties": sla.penalties or "Unknown",
-        "fairness_score": int(sla.fairness_score or 0),
     }
 
     vin_match = re.search(r"\b[A-HJ-NPR-Z0-9]{17}\b", contract.raw_text)
@@ -226,16 +226,15 @@ def get_contract_report(contract_id: int, db: Session = Depends(get_db)):
         "monthly_payment": sla.monthly_payment,
         "mileage_limit": sla.mileage_limit,
         "early_termination": sla.early_termination,
-        "penalties": sla.penalties,
-        "fairness_score": sla.fairness_score
+        "penalties": sla.penalties
     }
 
-    fairness = evaluate_contract_fairness(sla_dict)
+    analysis = evaluate_contract_fairness(sla_dict)
 
     return {
         "contract_id": contract.id,
         "sla_summary": sla_dict,
-        **fairness
+        **analysis
     }
 
 
@@ -255,14 +254,11 @@ def download_contract_report(contract_id: int, db: Session = Depends(get_db)):
         "lease_term": sla.lease_term,
         "monthly_payment": sla.monthly_payment,
         "mileage_limit": sla.mileage_limit,
+        "early_termination": sla.early_termination,
+        "penalties": sla.penalties
     }
 
-    fairness = evaluate_contract_fairness({
-        **sla_dict,
-        "early_termination": sla.early_termination,
-        "penalties": sla.penalties,
-        "fairness_score": sla.fairness_score
-    })
+    analysis = evaluate_contract_fairness(sla_dict)
 
     vin_match = re.search(r"\b[A-HJ-NPR-Z0-9]{17}\b", contract.raw_text)
     vehicle_info = get_vehicle_intelligence(vin_match.group(0)) if vin_match else None
@@ -270,7 +266,7 @@ def download_contract_report(contract_id: int, db: Session = Depends(get_db)):
     pdf_path = generate_contract_report(
         contract_id=contract.id,
         sla=sla_dict,
-        fairness=fairness,
+        fairness=analysis,
         vehicle_info=vehicle_info
     )
 

@@ -1,15 +1,15 @@
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
-from reportlab.lib.units import inch
 from datetime import datetime
 import os
+from typing import List, Dict, Optional
 
 
 def generate_contract_report(
     contract_id: int,
-    sla: dict,
-    fairness: dict,
-    vehicle_info: dict | None
+    sla: Dict,
+    fairness: Dict,
+    vehicle_info: Optional[Dict]
 ) -> str:
     filename = f"contract_report_{contract_id}.pdf"
     output_path = os.path.join("reports", filename)
@@ -21,7 +21,7 @@ def generate_contract_report(
 
     y = height - 50
 
-    def draw(text):
+    def draw(text: str):
         nonlocal y
         c.drawString(50, y, text)
         y -= 18
@@ -29,50 +29,54 @@ def generate_contract_report(
             c.showPage()
             y = height - 50
 
-    # ---------------- HEADER ----------------
-    draw("CAR CONTRACT ANALYSIS REPORT")
+    def draw_section(title: str):
+        draw(title)
+        draw("-" * 45)
+
+    def draw_list(title: str, items: List[str]):
+        draw(title)
+        if not items:
+            draw("  - None identified")
+        else:
+            for item in items:
+                draw(f"  - {item}")
+        draw("")
+
+    # ================= HEADER =================
+    draw("CAR CONTRACT REVIEW REPORT")
     draw("=" * 50)
     draw(f"Contract ID: {contract_id}")
     draw(f"Generated On: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
     draw("")
 
-    # ---------------- SLA ----------------
-    draw("SLA SUMMARY")
-    draw("-" * 40)
-    draw(f"APR: {sla.get('apr')} %")
-    draw(f"Lease Term: {sla.get('lease_term')} months")
-    draw(f"Monthly Payment: ${sla.get('monthly_payment')}")
-    draw(f"Mileage Limit: {sla.get('mileage_limit')} miles/year")
+    # ================= SLA SUMMARY =================
+    draw_section("SLA SUMMARY")
+    draw(f"APR: {sla.get('apr', 'Unknown')} %")
+    draw(f"Lease Term: {sla.get('lease_term', 'Unknown')} months")
+    draw(f"Monthly Payment: ${sla.get('monthly_payment', 'Unknown')}")
+    draw(f"Mileage Limit: {sla.get('mileage_limit', 'Unknown')} miles/year")
     draw("")
 
-    # ---------------- VEHICLE ----------------
-    draw("VEHICLE INFORMATION")
-    draw("-" * 40)
+    # ================= VEHICLE INFORMATION =================
+    draw_section("VEHICLE INFORMATION")
     if vehicle_info:
-        for k, v in vehicle_info.items():
-            draw(f"{k}: {v}")
+        for key, value in vehicle_info.items():
+            draw(f"{key}: {value}")
     else:
         draw("Vehicle data not available")
     draw("")
 
-    # ---------------- FAIRNESS ----------------
-    draw("FAIRNESS & RISK ANALYSIS")
-    draw("-" * 40)
-    draw(f"Fairness Score: {fairness.get('fairness_score')} / 100")
-    draw(f"Risk Level: {fairness.get('risk_level')}")
-    draw("")
+    # ================= CONTRACT INSIGHTS =================
+    draw_section("CONTRACT INSIGHTS (Pros & Cons)")
 
-    if fairness.get("risk_factors"):
-        draw("Risk Factors:")
-        for r in fairness["risk_factors"]:
-            draw(f"- {r}")
-    else:
-        draw("No major risks detected")
+    draw_list("Pros", fairness.get("pros", []))
+    draw_list("Cons", fairness.get("cons", []))
+    draw_list("Negotiation Suggestions", fairness.get("suggestions", []))
 
-    draw("")
-    draw("Negotiation Advice:")
-    for s in fairness.get("negotiation_advice", []):
-        draw(f"- {s}")
+    # ================= FOOTER =================
+    draw("=" * 50)
+    draw("This report is AI-assisted and intended for informational purposes only.")
+    draw("Always consult a legal professional before signing any contract.")
 
     c.save()
     return output_path

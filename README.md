@@ -1,362 +1,229 @@
-\# 🚗 LLM-Driven Car Lease Contract Review \& Negotiation AI Assistant
+🚗 LLM-Driven Car Lease Contract Review & Negotiation AI Assistant
 
+An AI-powered system that analyzes car lease/loan contracts, extracts key SLA clauses, integrates vehicle intelligence, highlights contract pros & cons, and assists users with negotiation through an AI chatbot.
 
+🎯 Project Objectives
 
-An AI-powered system that analyzes car lease/loan contracts, extracts SLA terms, evaluates fairness \& risk, integrates vehicle intelligence, and assists users with negotiation through an AI chatbot.
+Automatically analyze car lease / loan contracts
 
+Extract important SLA clauses using AI
 
+Provide transparent contract insights (Pros & Cons)
 
----
+Integrate real vehicle intelligence via VIN
 
+Assist users with negotiation using an AI chatbot
 
+Generate downloadable contract review reports (PDF)
 
-\## 🎯 Project Objectives
+Offer a clean, interactive dashboard
 
-
-
-\- Analyze car lease / loan contracts automatically
-
-\- Extract important SLA clauses using AI
-
-\- Evaluate contract fairness and risks
-
-\- Integrate real vehicle intelligence via VIN
-
-\- Provide AI-powered negotiation assistance
-
-\- Generate contract review reports (PDF)
-
-\- Offer a clean interactive dashboard
-
-
-
----
-
-
-
-\## 🧠 System Architecture
-
-
-
+🧠 System Architecture
 Frontend (HTML + JS Dashboard)
-
-↓
-
+        ↓
 FastAPI Backend (REST APIs)
-
-↓
-
+        ↓
 OCR / PDF Parsing
-
-↓
-
+        ↓
 SLA Extraction (Regex + LLM)
+        ↓
+Contract Insight Engine (Pros & Cons)
+        ↓
+Vehicle Intelligence APIs (VIN-based)
+        ↓
+AI Negotiation Chatbot (Groq LLM)
 
-↓
+⚙️ Tech Stack
+Backend
 
-Fairness Scoring Engine
+FastAPI
 
-↓
+SQLAlchemy
 
-Vehicle Intelligence APIs
+MySQL
 
-↓
+Uvicorn
 
-AI Chatbot (Groq LLM)
+Jinja2
 
+ReportLab (PDF generation)
 
+AI / NLP
 
+Groq LLM (LLaMA-3)
 
+Regex + rule-based logic
 
+Prompt-engineered chatbot
 
+Frontend
 
----
+HTML5
 
+CSS (Glassmorphism UI)
 
+JavaScript (Fetch API)
 
-\## ⚙️ Tech Stack
+📦 Features by Phase
+✅ Phase 3 – Contract Upload & OCR
 
+Upload PDF / image contracts
 
+Extract raw legal text safely
 
-\### Backend
+✅ Phase 4 – SLA Extraction
 
-\- \*\*FastAPI\*\*
+Extracted clauses include:
 
-\- \*\*SQLAlchemy\*\*
+APR
 
-\- \*\*MySQL\*\*
+Lease term
 
-\- \*\*Uvicorn\*\*
+Monthly payment
 
-\- \*\*Jinja2\*\*
+Mileage limits
 
-\- \*\*ReportLab (PDF Generation)\*\*
+Penalties & early termination clauses
 
+Designed with safe fallbacks to handle incomplete or noisy contracts.
 
+✅ Phase 5 – Vehicle Intelligence
 
-\### AI / NLP
+VIN detection from contract text
 
-\- \*\*Groq LLM (LLaMA-3)\*\*
+Vehicle make / model / year
 
-\- Regex + Rule-based logic
+Metadata via external vehicle APIs
 
-\- Prompt-engineered chatbot
+🔁 Phase 6 – Contract Insights (Redesigned)
 
+⚠️ Important Design Decision (Mentor-Driven)
 
+Initially, a numeric fairness score was explored.
+However, because vehicle price data is not reliably available, a numeric score could be misleading.
 
-\### Frontend
+🔄 Redesign Outcome
+The system now provides clear, explainable contract insights instead of arbitrary scoring.
 
-\- HTML5
+✔ Contract Pros
 
-\- CSS (Glassmorphism UI)
+Reasonable interest rate (if applicable)
 
-\- JavaScript (Fetch API)
+Standard mileage allowance
 
+No aggressive penalties detected
 
+⚠ Contract Cons
 
----
+Low mileage limits
 
+Early termination charges
 
+Ambiguous or strict penalty clauses
 
-\## 📦 Features by Phase
+This approach is:
 
+More transparent
 
+Easier to justify in interviews
 
-\### ✅ Phase 3 – Contract Upload \& OCR
+Aligned with real-world data constraints
 
-\- Upload PDF / Image contracts
+✅ Phase 7 – AI Negotiation Assistant
 
-\- Extract raw contract text
+Context-aware chatbot
 
+Uses:
 
+Contract text
 
-\### ✅ Phase 4 – SLA Extraction
+Extracted SLA data
 
-\- APR
+Vehicle intelligence
 
-\- Lease term
+Example questions:
 
-\- Monthly payment
+“Is this contract risky?”
 
-\- Mileage limits
+“What can I negotiate?”
 
-\- Penalties \& termination clauses
+“Explain the mileage clause”
 
+✅ Phase 7A–7C – Reporting & UI
 
+Unified contract insight report (JSON)
 
-\### ✅ Phase 5 – Vehicle Intelligence
+Downloadable PDF contract review
 
-\- VIN detection
+Fully integrated dashboard UI
 
-\- Make / Model / Year
-
-\- Vehicle metadata from APIs
-
-
-
-\### ✅ Phase 6 – Fairness Scoring \& Risk Analysis
-
-\- Fairness score (0–100)
-
-\- Risk level: Low / Medium / High
-
-\- Risk explanation factors
-
-
-
-\### ✅ Phase 7 – AI Negotiation Assistant
-
-\- Context-aware chatbot
-
-\- Risk explanation
-
-\- Negotiation suggestions
-
-\- Contract Q\&A
-
-
-
-\### ✅ Phase 7A–7C
-
-\- Unified contract risk report
-
-\- Downloadable PDF report
-
-\- Interactive dashboard UI
-
-
-
----
-
-
-
-\## 🚀 How to Run the Project
-
-
-
-\### 1️⃣ Clone Repository
-
-```bash
-
+🚀 How to Run the Project
+1️⃣ Clone Repository
 git clone <repo-url>
-
 cd car-contract-ai
 
-
-
-
-
 2️⃣ Create Virtual Environment
-
 python -m venv venv
-
-venv\\Scripts\\activate
-
-
+venv\Scripts\activate
 
 3️⃣ Install Dependencies
-
 pip install -r requirements.txt
 
-
-
 4️⃣ Set Environment Variables
-
-setx GROQ\_API\_KEY "your\_groq\_api\_key"
-
-
+setx GROQ_API_KEY "your_groq_api_key"
 
 5️⃣ Run Backend
-
 uvicorn backend.main:app --reload
-
-
 
 6️⃣ Open Dashboard
 
-http://127.0.0.1:8000
+👉 http://127.0.0.1:8000
 
-
-
-🧪 API Documentation
-
-
-
-Swagger UI:
-
-👉 http://127.0.0.1:8000/docs
-
-
+👉 API Docs: http://127.0.0.1:8000/docs
 
 📄 Sample Outputs
 
+SLA extraction summary
 
+Vehicle intelligence report
 
-Fairness Score \& Risk Summary
+Contract pros & cons insights
 
+AI chatbot responses
 
-
-Vehicle Intelligence Report
-
-
-
-AI Chatbot Responses
-
-
-
-PDF Contract Review Report
-
-
+PDF contract review report
 
 👨‍💻 Author
 
-
-
 Shanmuk Venkat Kakarapalli
-
 Intern – AI / Data Engineering
 
+🏆 Mentorship & Learning Outcomes
 
-
-🏆 Mentorship \& Learning Outcomes
-
-
-
-Hands-on FastAPI development
-
-
+Hands-on FastAPI backend development
 
 AI-driven contract analysis
 
+Prompt engineering for real use cases
 
-
-Prompt engineering
-
-
-
-REST API design
-
-
+REST API design & documentation
 
 Full-stack integration
 
-
+Mentor-guided architectural redesign
 
 Real-world internship project experience
 
-
-
-
-
----
-
-
-
-\## ✅ Step 3: Add README to Git
-
-
-
-Now run these commands:
-
-
-
-```bash
-
+📌 Git Workflow (Mentor Branch)
 git add README.md
-
-git commit -m "Added project README documentation"
-
+git commit -m "Updated README: contract insights redesign & chatbot focus"
 git push origin shanmuk-venkat
-
 
 
 🎉 Result
 
+README appears clean on GitHub
 
+Mentor sees clear reasoning + maturity
 
-After push:
-
-
-
-README appears on GitHub repo homepage
-
-
-
-Mentor can instantly understand:
-
-
-
-What you built
-
-
-
-How it works
-
-
-
-Your contribution quality
-
-
-
-This README is internship-grade + recruiter-friendly 🔥
-
+Project looks internship-grade & interview-ready

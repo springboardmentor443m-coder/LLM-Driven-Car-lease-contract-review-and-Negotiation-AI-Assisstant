@@ -45,21 +45,46 @@ async function getVehicle() {
     `<code>${JSON.stringify(data, null, 2)}</code>`;
 }
 
-// ---------------- Fairness ----------------
+// ---------------- PROS & CONS (UPDATED PHASE 6) ----------------
 async function getFairness() {
   if (!CONTRACT_ID) return alert("Upload contract first");
 
-  const res = await fetch(`${API}/${CONTRACT_ID}/fairness-score`);
+  const res = await fetch(`${API}/${CONTRACT_ID}/fairness`);
   const data = await res.json();
 
-  document.getElementById("fairnessScore").innerText = data.fairness_score;
-  document.getElementById("riskLevel").innerText = data.risk_level;
+  if (!res.ok) {
+    document.getElementById("fairnessResult").innerHTML =
+      `<code style="color:red">${data.detail || "Analysis failed"}</code>`;
+    return;
+  }
+
+  let output = "";
+
+  output += "✅ PROS:\n";
+  if (data.pros.length === 0) {
+    output += "- No strong advantages detected\n";
+  } else {
+    data.pros.forEach(p => output += `- ${p}\n`);
+  }
+
+  output += "\n⚠️ CONS:\n";
+  if (data.cons.length === 0) {
+    output += "- No major issues detected\n";
+  } else {
+    data.cons.forEach(c => output += `- ${c}\n`);
+  }
+
+  output += "\n💡 NEGOTIATION OPPORTUNITIES:\n";
+  if (data.negotiation_opportunities.length === 0) {
+    output += "- No clear negotiation points\n";
+  } else {
+    data.negotiation_opportunities.forEach(n => output += `- ${n}\n`);
+  }
+
+  output += `\n📝 SUMMARY:\n${data.summary}`;
 
   document.getElementById("fairnessResult").innerHTML =
-    `<code>${JSON.stringify(data, null, 2)}</code>`;
-
-  document.getElementById("fairnessMetrics").style.display = "flex";
-  document.getElementById("fairnessMetrics").style.opacity = 1;
+    `<code>${output}</code>`;
 }
 
 // ---------------- Chatbot ----------------

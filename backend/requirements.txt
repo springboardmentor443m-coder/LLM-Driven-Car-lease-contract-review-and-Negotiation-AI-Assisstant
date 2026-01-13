@@ -1,0 +1,6 @@
+flask
+pytesseract
+pdfplumber
+pdf2image
+groq
+requests

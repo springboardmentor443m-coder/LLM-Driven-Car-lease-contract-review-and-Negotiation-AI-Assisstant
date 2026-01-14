@@ -1,3 +1,4 @@
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 # 1. IMPORT THE NEW VIN ROUTER HERE
@@ -28,4 +29,6 @@ def health_check():
     return {"status": "active", "system": "Car Lease Assistant"}
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    # Run the application directly
+    # You can also run with: uvicorn main:app --reload --host 0.0.0.0 --port 8000
+    uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)

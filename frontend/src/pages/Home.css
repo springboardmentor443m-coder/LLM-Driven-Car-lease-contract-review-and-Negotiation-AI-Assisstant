@@ -1,0 +1,40 @@
+/* src/pages/Home.css */
+
+/* We don't need .home-container anymore because we use .page-container from global.css */
+
+/* Optional: Adds a subtle background glow behind the dashboard */
+.page-container {
+  position: relative;
+  z-index: 1;
+}
+
+.page-container::before {
+  content: '';
+  position: absolute;
+  top: -100px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.08) 0%, rgba(0, 0, 0, 0) 70%);
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* Specific adjustments for the Upload Card on the Home page */
+.upload-zone {
+  min-height: 300px; /* Make it taller like the screenshot */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Smooth fade-in animation for the page */
+.page-container {
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

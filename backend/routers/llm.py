@@ -1,9 +1,10 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from services.llm_service import analyze_lease, chat_negotiation
-# IMPORT THE NEW SERVICE HERE
-from services.valuation_service import get_vehicle_valuation, calculate_score
 import re
+import traceback
+from typing import Any, Dict
+from services.llm_service import analyze_lease, chat_negotiation
+from services.valuation_service import get_vehicle_valuation, calculate_score
 
 router = APIRouter()
 
@@ -14,74 +15,59 @@ class ChatRequest(BaseModel):
     history: list
     message: str
 
+def _parse_money(value: Any) -> float:
+    if value is None: return 0.0
+    try:
+        cleaned = re.sub(r"[^0-9.]", "", str(value))
+        return float(cleaned) if cleaned else 0.0
+    except: return 0.0
+
+# Updated section for backend/routers/llm.py
 @router.post("/full-analysis")
 async def full_analysis_endpoint(request: AnalysisRequest):
-    """
-    Analyzes the contract text using the Multi-Source Auditor Engine.
-    AND fetches market data + calculates fairness score.
-    """
-    if not request.text:
-        raise HTTPException(status_code=400, detail="Text is required")
-    
-    # 1. Run the LLM Analysis first
     result = await analyze_lease(request.text)
     
-    if "error" in result:
-        raise HTTPException(status_code=500, detail=result["error"])
-
-    # 2. Extract Data for Valuation
-    # We look for keys that your LLM extracts. Ensure your prompt asks for 'vin', 'gross_capitalized_cost', and 'money_factor'
-    vin = result.get('vin')
+    # Extract market price from the analysis result
+    market_data = result.get("rapidapi_details") or {}
+    market_price = _parse_money(market_data.get("estimated_price") or 0)
     
-    # Clean up price (remove '$' and ',')
-    contract_price_raw = result.get('gross_capitalized_cost', '0')
-    try:
-        contract_price = float(re.sub(r'[^\d.]', '', str(contract_price_raw)))
-    except:
-        contract_price = 0.0
+    # Extract all SLA factors for comprehensive scoring
+    sla = result.get("sla_extraction") or {}
+    contract_monthly = _parse_money(sla.get("monthly_payment") or 0)
+    money_factor_str = sla.get("interest_rate_apr") or "0"
+    money_factor = _parse_money(money_factor_str) / 100.0 if "%" not in str(money_factor_str) else _parse_money(money_factor_str.replace("%", "")) / 100.0
+    residual_value = _parse_money(sla.get("residual_value") or 0)
+    mileage_allowance = _parse_money(sla.get("mileage_allowance_per_year") or 12000)
+    excess_mileage_fee = _parse_money(sla.get("excess_mileage_fee") or 0)
+    lease_term = _parse_money(sla.get("lease_term_months") or 36)
+    
+    # Calculate Fairness based on all factors
+    fairness_result = calculate_score(
+        contract_price=contract_monthly,
+        market_price=market_price,
+        money_factor=money_factor,
+        residual_value=residual_value,
+        mileage_allowance=mileage_allowance,
+        excess_mileage_fee=excess_mileage_fee,
+        lease_term_months=lease_term
+    ) if market_price > 0 else {"score": 50, "rating": "Unknown", "reasons": []}
 
-    money_factor = result.get('money_factor', 0)
-
-    # 3. Fetch Market Data & Calculate Fairness
-    valuation_details = {}
-    market_price = 0
-    fairness_data = {}
-
-    if vin:
-        # Fetch data from NHTSA / RapidAPI
-        valuation_details, market_price = await get_vehicle_valuation(vin)
-        
-        # Calculate Score if we have prices
-        if contract_price > 0 and market_price > 0:
-            fairness_data = calculate_score(contract_price, market_price, money_factor)
-        else:
-            fairness_data = {
-                "score": 0, 
-                "rating": "Unknown", 
-                "reasons": ["Could not extract valid Price or VIN to compare."]
-            }
-    else:
-        # Handle missing VIN
-        fairness_data = {
-            "score": 0, 
-            "rating": "Error", 
-            "reasons": ["No VIN found in contract."]
-        }
-
-    # 4. Attach the new data to the response
-    result['vehicle_details'] = valuation_details
-    result['market_data'] = {
-        "market_average": market_price,
-        "contract_price": contract_price
+    return {
+        **result,
+        "market_data": {
+            "market_average": market_price,
+            "contract_price": contract_monthly,
+            "buyout_price": residual_value,
+            "ai_verdict": "Fair" if market_price == 0 or contract_monthly < (market_price * 0.015) else "Overpriced"
+        },
+        "fairness_score": fairness_result
     }
-    result['fairness_score'] = fairness_data
-
-    return result
-
 @router.post("/chat")
 async def chat_endpoint(request: ChatRequest):
+    """Fixed: Now registered under the /llm prefix."""
     try:
         response = await chat_negotiation(request.history, request.message)
         return {"response": response}
     except Exception as e:
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))

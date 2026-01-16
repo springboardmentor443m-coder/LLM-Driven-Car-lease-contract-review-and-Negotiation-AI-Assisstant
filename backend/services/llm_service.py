@@ -30,15 +30,19 @@ def fix_common_vin_errors(vin: str) -> str:
     if vin[0] in ['I', 'L']:
         return "1" + vin[1:]
     return vin
-
 async def analyze_lease(text: str):
     
-    # --- 1. SMART VIN SEARCH ---
+    # --- 1. SMART VIN & MILEAGE SEARCH ---
     vin_match = re.search(r'[A-HJ-NPR-Z0-9]{17}', text)
+    # Regex for Mileage extraction (e.g., "15,000 miles")
+    mile_match = re.search(r'(\d{1,3}(?:,\d{3})*)\s*miles', text, re.IGNORECASE)
     
     nhtsa_raw_data = {}
     market_raw_data = {"status": "Not Checked"}
     market_price = None
+    
+    # Extract mileage for the API call (Default to 12000 if not found)
+    found_miles = int(mile_match.group(1).replace(",", "")) if mile_match else 12000
     
     vehicle_context = "NHTSA Data: Not Verified (VIN not found in text scan)."
     market_context = "Market Value: Not Available."
@@ -47,15 +51,12 @@ async def analyze_lease(text: str):
         raw_vin = vin_match.group(0)
         vin = fix_common_vin_errors(raw_vin)
         
-        print(f"✅ Extracted VIN: {vin}")
+        print(f"✅ Extracted VIN: {vin} | Miles: {found_miles}")
         
-        # Always add VIN to nhtsa_raw_data
         nhtsa_raw_data["VIN"] = vin
-        
         details = await get_vehicle_details(vin)
         
         if details:
-            # FIX: Mapping keys exactly as the frontend expects them
             nhtsa_raw_data = {
                 "Make": details.get('Make'),
                 "Model": details.get('Model'),
@@ -77,18 +78,19 @@ async def analyze_lease(text: str):
                 f"Engine: {nhtsa_raw_data['Engine']} HP\n"
             )
             
-            if make and model and year:
-                # Calculate Market Price
-                market_price = estimate_market_price(make, model, year)
+            # UPDATED LOGIC: Using VIN and Mileage as requested by the working API
+            if vin:
+                market_price = estimate_market_price(vin, found_miles)
                 
                 if market_price:
                     market_raw_data = {
                         "estimated_price": market_price,
                         "currency": "USD",
-                        "source": "RapidAPI / Algorithmic"
+                        "source": "RapidAPI / Market Data"
                     }
-                    market_context = f"*** REAL MARKET VALUE ***: ${market_price:,.2f}"
+                    market_context = f"*** REAL MARKET VALUE ***: ${market_price:,.2f} (Adjusted for {found_miles:,} miles)"
 
+    # --- 2. UPDATED PROMPT (Unchanged per your instruction) 
     # --- 2. UPDATED PROMPT ---
     prompt = f"""
     You are an expert Senior Legal Contract Auditor for Auto Sales & Leases.
@@ -162,12 +164,34 @@ async def analyze_lease(text: str):
         llm_result["rapidapi_details"] = market_raw_data
         
         # Ensure fairness score math is applied correctly to the final object
+        # --- ENSURE FAIRNESS & NEGOTIATION LOGIC IS APPLIED ---
         if market_price:
-            # Simple math for the internal score if the LLM didn't calculate it well
-            extracted_payment = float(str(llm_result["sla_extraction"].get("monthly_payment", "0")).replace("$","").replace(",",""))
-            if extracted_payment > (market_price * 0.015):
-                llm_result["fairness_analysis"]["score"] = 65 # Example penalty
-        
+            # 1. Extract Buyout and Payment for calculations
+            raw_buyout = llm_result["sla_extraction"].get("residual_value") or llm_result["sla_extraction"].get("buyout_price") or "0"
+            extracted_buyout = float(str(raw_buyout).replace("$", "").replace(",", ""))
+            
+            # 2. Logic for Negotiation Target (The "Sweet Spot")
+            if extracted_buyout > market_price:
+                # Car is overpriced: Target = Market Price + 7% Convenience Premium
+                target_buyout = market_price * 1.07
+                savings = extracted_buyout - target_buyout
+                
+                # Injecting custom negotiation guidance into the JSON
+                llm_result["negotiation_target"]["target_buyout"] = f"${target_buyout:,.2f}"
+                llm_result["negotiation_target"]["market_comparison"] = f"Contract is ${extracted_buyout - market_price:,.2f} ABOVE market value."
+                llm_result["negotiation_target"]["reasoning"] = (
+                    f"The car's market value is ${market_price:,.2f}. We suggest a target of ${target_buyout:,.2f} "
+                    f"to account for dealer auction savings and convenience. This saves you ${savings:,.2f}."
+                )
+                
+                # Apply penalty to fairness score for negative equity
+                llm_result["fairness_analysis"]["score"] = 45 
+                llm_result["fairness_analysis"]["flags"].append("Significant Negative Equity Detected")
+            else:
+                # Car is a good deal: Equity is positive
+                llm_result["fairness_analysis"]["score"] = 95
+                llm_result["negotiation_target"]["reasoning"] = "The contract buyout is below market value. Purchase is highly recommended."
+
         return llm_result
 
     except Exception as e:

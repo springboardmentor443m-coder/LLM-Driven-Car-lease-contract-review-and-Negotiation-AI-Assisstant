@@ -1,72 +1,33 @@
 import React from 'react';
 
 const FairnessScore = ({ analysis }) => {
-    // SAFETY CHECK: Default values if analysis is missing
-    const score = analysis?.score || 0;
-    const assessment = analysis?.assessment || "No Score Available";
+  const score = analysis?.score || 0;
+  const label = analysis?.assessment || "Fairness Rating";
 
-    // Determine color based on score
-    let color = '#ef4444'; // Red (Bad)
-    if (score >= 80) color = '#10b981'; // Green (Emerald)
-    else if (score >= 50) color = '#f59e0b'; // Orange (Average)
+  let color = '#ef4444'; // Red
+  if (score >= 75) color = '#10b981'; // Green
+  else if (score >= 50) color = '#f59e0b'; // Yellow
 
-    return (
-        <div 
-            className="card" 
-            style={{ 
-                textAlign: 'center', 
-                marginBottom: '20px',
-                background: 'var(--bg-card)', // Dark Card Background
-                color: 'var(--text-main)',    // Light Text
-                border: '1px solid var(--border-color)',
-                borderRadius: '16px',
-                padding: '24px'
-            }}
-        >
-            <h3 style={{ margin: '0 0 20px 0', fontSize: '1.1rem' }}>Contract Fairness Score</h3>
-            
-            <div style={{
-                position: 'relative',
-                width: '150px',
-                height: '150px',
-                margin: '0 auto 24px auto',
-                borderRadius: '50%',
-                // The empty part is now dark grey to match the theme
-                background: `conic-gradient(${color} ${score * 3.6}deg, var(--bg-darker) 0deg)`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 0 20px rgba(0,0,0,0.5)'
-            }}>
-                {/* Inner Circle covering the center */}
-                <div style={{
-                    width: '120px',
-                    height: '120px',
-                    borderRadius: '50%',
-                    background: 'var(--bg-card)', // Matches container background
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexDirection: 'column'
-                }}>
-                    <span style={{ fontSize: '36px', fontWeight: 'bold', color: color }}>
-                        {score}
-                    </span>
-                    <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>/ 100</span>
-                </div>
-            </div>
+  const radius = 50;
+  const stroke = 8;
+  const normalizedRadius = radius - stroke * 2;
+  const circumference = normalizedRadius * 2 * Math.PI;
+  const strokeDashoffset = circumference - (score / 100) * circumference;
 
-            <p style={{ 
-                fontSize: '0.95rem', 
-                color: 'var(--text-main)', 
-                maxWidth: '90%', 
-                margin: '0 auto',
-                lineHeight: '1.5'
-            }}>
-                {assessment}
-            </p>
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ position: 'relative', width: '120px', height: '120px' }}>
+        <svg height="120" width="120" style={{ transform: 'rotate(-90deg)' }}>
+          <circle stroke="#374151" strokeWidth={stroke} fill="transparent" r={normalizedRadius} cx={radius + 10} cy={radius + 10} />
+          <circle stroke={color} fill="transparent" strokeWidth={stroke} strokeDasharray={circumference + ' ' + circumference} style={{ strokeDashoffset, transition: 'stroke-dashoffset 0.5s ease-in-out' }} strokeLinecap="round" r={normalizedRadius} cx={radius + 10} cy={radius + 10} />
+        </svg>
+        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center' }}>
+          <div style={{ fontSize: '2rem', fontWeight: 'bold', color: color }}>{score}</div>
+          <div style={{ fontSize: '0.7rem', color: '#9ca3af' }}>/ 100</div>
         </div>
-    );
+      </div>
+      <div style={{ marginTop: '10px', color: '#d1d5db', fontSize: '0.9rem', fontWeight: '500' }}>{label}</div>
+    </div>
+  );
 };
-
 export default FairnessScore;

@@ -1,10 +1,10 @@
 fastapi
 uvicorn
+python-multipart
+httpx
 python-dotenv
 groq
-httpx
-python-multipart
 pytesseract
-pillow
+pdf2image
 requests
-httpx
+pydantic

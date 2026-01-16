@@ -30,6 +30,7 @@ const Home = ({ setAnalysisData, setRawText, setVinData }) => {
   };
 
   // --- FLOW 1: DOCUMENT UPLOAD ---
+  // --- FLOW 1: DOCUMENT UPLOAD ---
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -47,14 +48,11 @@ const Home = ({ setAnalysisData, setRawText, setVinData }) => {
       const aiRes = await runFullAnalysis(ocrRes.text);
       if (aiRes.error) throw new Error(aiRes.error);
 
+      // 1. Update Master State
       setAnalysisData(aiRes);
 
-      // ✅ Correct VIN priority (NHTSA first)
-      let rawVin =
-        aiRes.nhtsa_details?.vin ||
-        aiRes.vehicle_details?.vin ||
-        aiRes.vin;
-
+      // --- VIN Processing ---
+      let rawVin = aiRes.vehicle_details?.vin || aiRes.nhtsa_details?.vin || aiRes.vin;
       const validVin = sanitizeVIN(rawVin);
       const details = aiRes.vehicle_details || aiRes.nhtsa_details || null;
 
@@ -63,7 +61,10 @@ const Home = ({ setAnalysisData, setRawText, setVinData }) => {
       }
 
       setStatusMsg("Done! Redirecting to Summary...");
-      navigate('/summary');
+      
+      // 2. THE FIX: Pass aiRes in the location state so Summary and Valuation 
+      // can access it instantly without waiting for the prop
+      navigate('/summary', { state: { analysisData: aiRes, rawText: ocrRes.text } });
 
     } catch (err) {
       alert("Error: " + err.message);
@@ -83,33 +84,25 @@ const Home = ({ setAnalysisData, setRawText, setVinData }) => {
     }
 
     setLoading(true);
-    setStatusMsg("Fetching Vehicle Details from NHTSA...");
+    setStatusMsg("Fetching Vehicle Details...");
 
     try {
-      // Use the valuation endpoint to get complete data (NHTSA + market price)
-      const response = await fetch(`http://localhost:8000/vin/valuation/${cleanVin}`);
+      const response = await fetch(`http://localhost:8000/vin/decode/${cleanVin}`);
 
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`VIN lookup failed: ${response.statusText} - ${errorText}`);
+        throw new Error("VIN not found in database or invalid.");
       }
 
       const data = await response.json();
 
-      // Set both vinData and analysisData for complete information
-      setVinData({ vin: cleanVin, details: data.vehicle_details });
-      setAnalysisData(data);
+      setVinData({ vin: cleanVin, details: data });
+      setAnalysisData(null);
       setRawText("");
 
       navigate('/valuation');
 
     } catch (err) {
-      // Provide more helpful error messages
-      let errorMessage = err.message;
-      if (err.message.includes("Failed to fetch") || err.message.includes("NetworkError")) {
-        errorMessage = "Cannot connect to backend server. Please ensure the backend is running on http://localhost:8000";
-      }
-      alert(errorMessage);
+      alert(err.message);
     } finally {
       setLoading(false);
       setStatusMsg("");

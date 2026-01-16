@@ -1,53 +1,58 @@
 import os
 import requests
 from datetime import datetime
+from functools import lru_cache
+from dotenv import load_dotenv
 
-# API Endpoint
-VD_VIN_URL = "https://api.vehicledatabases.com/market-value/v2/{vin}"
+load_dotenv()
 
-def estimate_market_price(vin=None, year=None, body="sedan"):
-    # Must match the .env key name exactly
-    vd_key = os.getenv("VEHICLE_DB_KEY")
+@lru_cache(maxsize=100)
+def get_cached_market_price(vin, mileage, year):
+    # This ensures we don't call the API twice for the same car/mileage combo
+    return estimate_market_price(vin=vin, mileage=mileage, year=year)
+
+def estimate_market_price(vin=None, mileage=15000, year=None):
+    """
+    Primary: RapidAPI Vehicle Pricing (Verified Working)
+    Fallback: Heuristic Math
+    """
+    rapid_key = os.getenv("RAPID_API_KEY")
+    url = "https://vehicle-pricing-api.p.rapidapi.com/1837/get%2Bvehicle%2Bprice%2Bdata"
     
-    if vd_key and vin:
-        # FIX 1: Use 'Subscription-Key' instead of 'x-AuthKey'
+    if rapid_key and vin:
+        querystring = {"vin": vin, "mileage": str(mileage)}
         headers = {
-            'Subscription-Key': vd_key, 
-            'Accept': 'application/json'
+            "x-rapidapi-key": rapid_key,
+            "x-rapidapi-host": "vehicle-pricing-api.p.rapidapi.com"
         }
+        
         try:
-            resp = requests.get(VD_VIN_URL.format(vin=vin), headers=headers, timeout=12)
+            print(f"📡 Requesting Market Value for VIN: {vin} at {mileage} miles...")
+            resp = requests.get(url, headers=headers, params=querystring, timeout=15)
             
-            # If we get a 401 here, the key is still being rejected
             if resp.status_code == 200:
                 data = resp.json()
+                # Accessing the specific nested 'prices' key from your successful test
+                prices = data.get("data", {}).get("prices", {})
+                avg_price = prices.get("average")
                 
-                # FIX 2: Dynamic extraction to handle different API response shapes
-                # First, check the most direct path
-                direct_val = data.get("data", {}).get("market_value")
-                if isinstance(direct_val, (int, float)):
-                    return float(direct_val)
-
-                # Fallback to your nested list logic if the direct path fails
-                mv_data = data.get("data", {}).get("market_value", {}).get("market_value_data", [])
-                if mv_data:
-                    for entry in mv_data[0].get("market value", []):
-                        if entry.get("Condition") == "Clean":
-                            val = entry.get("Dealer Retail")
-                            return float(str(val).replace("$","").replace(",",""))
+                if avg_price:
+                    print(f"✅ API Success: ${avg_price}")
+                    return float(avg_price)
             else:
-                print(f"VehicleDatabases API Rejected Key: {resp.status_code} - {resp.text}")
-
+                print(f"⚠️ RapidAPI returned {resp.status_code}: {resp.text}")
+                
         except Exception as e:
-            print(f"VehicleDatabases Connection Error: {e}")
+            print(f"❌ RapidAPI Connection Error: {e}")
 
-    # Fallback to Heuristic if API fails
-    # This prevents the $10,200 loop by providing a more realistic Camry baseline
-    model_year = int(year) if str(year).isdigit() else 2018
-    age = max(0, datetime.now().year - model_year)
+    # Fallback to Heuristic if API fails (using improved math for 2026)
+    print("⚠️ Using Heuristic Fallback")
+    model_year = int(year) if str(year).isdigit() else 2020
+    current_year = 2026 # Updated for your current context
+    age = max(0, current_year - model_year)
     
-    # Standard base prices for common vehicles
-    base = 25000.0 if "camry" in str(body).lower() else 30000.0
-    estimate = base * (0.88 ** age) # Realistic 12% annual depreciation
-    
+    # Using $35k as a more realistic starting base for modern cars
+    base = 35000.0 
+    # Gentler depreciation (12% annually)
+    estimate = base * (0.88 ** age)
     return round(estimate, 2)

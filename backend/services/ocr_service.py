@@ -22,3 +22,4 @@ async def extract_text_from_file(file_bytes: bytes, filename: str):
         return {"text": clean_text(full_text)}
     except Exception as e:
         return {"error": str(e)}
+        

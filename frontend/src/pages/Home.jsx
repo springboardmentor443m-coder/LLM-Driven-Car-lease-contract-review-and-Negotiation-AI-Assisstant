@@ -10,27 +10,18 @@ const Home = ({ setAnalysisData, setRawText, setVinData }) => {
   const [statusMsg, setStatusMsg] = useState("");
   const [vinInput, setVinInput] = useState("");
 
-  // --- HELPER: VIN SANITIZER ---
   const sanitizeVIN = (vin) => {
     if (!vin) return null;
-
     let clean = vin.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-
-    // Fix common OCR issue: leading extra '4'
     if (clean.length === 18 && clean.startsWith('4')) {
       clean = clean.substring(1);
     }
-
-    // Fallback: trim to last 17 chars
     if (clean.length > 17) {
       clean = clean.substring(clean.length - 17);
     }
-
     return clean;
   };
 
-  // --- FLOW 1: DOCUMENT UPLOAD ---
-  // --- FLOW 1: DOCUMENT UPLOAD ---
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -48,6 +39,11 @@ const Home = ({ setAnalysisData, setRawText, setVinData }) => {
       const aiRes = await runFullAnalysis(ocrRes.text);
       if (aiRes.error) throw new Error(aiRes.error);
 
+      // --- PERSISTENCE: Save to Browser Memory ---
+      // This "Vault" prevents data loss during navigation
+      localStorage.setItem('leaseAnalysis', JSON.stringify(aiRes));
+      localStorage.setItem('rawLeaseText', ocrRes.text);
+
       // 1. Update Master State
       setAnalysisData(aiRes);
 
@@ -62,8 +58,7 @@ const Home = ({ setAnalysisData, setRawText, setVinData }) => {
 
       setStatusMsg("Done! Redirecting to Summary...");
       
-      // 2. THE FIX: Pass aiRes in the location state so Summary and Valuation 
-      // can access it instantly without waiting for the prop
+      // 2. Navigation with state suitcase
       navigate('/summary', { state: { analysisData: aiRes, rawText: ocrRes.text } });
 
     } catch (err) {
@@ -74,10 +69,8 @@ const Home = ({ setAnalysisData, setRawText, setVinData }) => {
     }
   };
 
-  // --- FLOW 2: DIRECT VIN SEARCH ---
   const handleVinSearch = async () => {
     const cleanVin = sanitizeVIN(vinInput);
-
     if (!cleanVin || cleanVin.length !== 17) {
       alert("VIN must be exactly 17 valid characters.");
       return;
@@ -88,19 +81,18 @@ const Home = ({ setAnalysisData, setRawText, setVinData }) => {
 
     try {
       const response = await fetch(`http://localhost:8000/vin/decode/${cleanVin}`);
-
-      if (!response.ok) {
-        throw new Error("VIN not found in database or invalid.");
-      }
+      if (!response.ok) throw new Error("VIN not found in database or invalid.");
 
       const data = await response.json();
 
       setVinData({ vin: cleanVin, details: data });
       setAnalysisData(null);
       setRawText("");
+      
+      // Clear previous analysis when doing a fresh VIN search
+      localStorage.removeItem('leaseAnalysis');
 
       navigate('/valuation');
-
     } catch (err) {
       alert(err.message);
     } finally {
@@ -121,12 +113,10 @@ const Home = ({ setAnalysisData, setRawText, setVinData }) => {
       </header>
 
       <div className="grid-2-col">
-        {/* CARD 1: UPLOAD */}
         <div className="home-card upload-zone">
           <h3 style={{ display: 'flex', gap: '10px', alignItems: 'center', marginTop: 0 }}>
             <FileText color="#10b981" /> Analyze Contract
           </h3>
-
           <div className="upload-dashed-area" style={{
             border: '2px dashed #4b5563',
             borderRadius: '12px',
@@ -151,7 +141,6 @@ const Home = ({ setAnalysisData, setRawText, setVinData }) => {
                 </p>
               </>
             )}
-
             <input
               type="file"
               onChange={handleFileUpload}
@@ -170,16 +159,13 @@ const Home = ({ setAnalysisData, setRawText, setVinData }) => {
           </div>
         </div>
 
-        {/* CARD 2: VIN SEARCH */}
         <div className="home-card">
           <h3 style={{ display: 'flex', gap: '10px', alignItems: 'center', marginTop: 0 }}>
             <Search color="#10b981" /> Quick VIN Check
           </h3>
-
           <p style={{ color: '#9ca3af', fontSize: '0.9rem', marginBottom: '20px' }}>
             Check NHTSA specs and Market Value without a contract.
           </p>
-
           <input
             type="text"
             placeholder="Enter 17-Char VIN"
@@ -198,7 +184,6 @@ const Home = ({ setAnalysisData, setRawText, setVinData }) => {
               boxSizing: 'border-box'
             }}
           />
-
           <button
             onClick={handleVinSearch}
             disabled={loading}

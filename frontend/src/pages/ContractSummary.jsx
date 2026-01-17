@@ -1,22 +1,19 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom'; // 1. Added useLocation
+import { Link } from 'react-router-dom';
 import SLAView from '../components/SLAView'; 
 
-const ContractSummary = () => { // 2. Removed props from here
-  const location = useLocation();
-  
-  // 3. CATCH the data from the Home page's suitcase
-  const { analysisData, rawText } = location.state || {};
+// Receive analysisData and rawText as PROPS from App.js
+const ContractSummary = ({ analysisData, rawText }) => { 
 
-  // DEBUG: Check your browser console (F12) to see if data exists here
-  console.log("Summary Page Suitcase:", analysisData);
-
+  // Check if data exists in the App.js state
   if (!analysisData) {
     return (
-      <div className="page-container">
-        <h2>No Data found in suitcase.</h2>
-        <p>Please upload the contract on the Home page first.</p>
-        <Link to="/" style={{color:'#10b981'}}>Go Home</Link>
+      <div className="page-container" style={{ textAlign: 'center', paddingTop: '50px' }}>
+        <h2 style={{ color: '#ef4444' }}>No Contract Data Found</h2>
+        <p style={{ color: '#9ca3af' }}>Please upload a contract on the Home page first.</p>
+        <Link to="/" style={{ color: '#10b981', textDecoration: 'none', fontWeight: 'bold' }}>
+          &larr; Go to Home
+        </Link>
       </div>
     );
   }
@@ -32,20 +29,21 @@ const ContractSummary = () => { // 2. Removed props from here
         </p>
       </div>
 
+      {/* Pass the data down to the component */}
       <SLAView analysisData={analysisData} rawText={rawText} />
       
-      <div style={{textAlign:'right', marginTop:'20px'}}>
+      <div style={{ textAlign: 'right', marginTop: '20px' }}>
         <Link 
           to="/valuation" 
-          state={{ analysisData, rawText }} // 4. PASS the suitcase to Valuation
           className="nav-item active" 
           style={{
-            display:'inline-block', 
-            padding:'10px 20px', 
-            background:'#374151', 
-            borderRadius:'8px', 
-            color:'white', 
-            textDecoration:'none'
+            display: 'inline-block', 
+            padding: '10px 20px', 
+            background: '#374151', 
+            borderRadius: '8px', 
+            color: 'white', 
+            textDecoration: 'none',
+            border: '1px solid #4b5563'
           }}
         >
           Next: Vehicle Valuation &rarr;

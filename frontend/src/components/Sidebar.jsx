@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, FileText, Car, DollarSign, MessageSquare, History, Zap } from 'lucide-react';
+import { Home, FileText, Car, DollarSign, MessageSquare, Zap } from 'lucide-react';
 
 const Sidebar = () => {
   return (

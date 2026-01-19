@@ -7,4 +7,7 @@ Pillow
 requests
 beautifulsoup4
 lxml
-requests
+PyPDF2
+reportlab
+groq
+python-dotenv

@@ -5,12 +5,18 @@ Generate negotiation messages based on contract analysis
 
 import os
 from groq import Groq
-from dotenv import load_dotenv
+from config import settings
+from logger import logger
 
-load_dotenv()
-
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
+GROQ_API_KEY = settings.GROQ_API_KEY
+if GROQ_API_KEY:
+    try:
+        groq_client = Groq(api_key=GROQ_API_KEY)
+    except Exception as e:
+        logger.error(f"Failed to initialize Groq client in negotiator: {e}", exc_info=True)
+        groq_client = None
+else:
+    groq_client = None
 
 
 def generate_negotiation_messages(structured_data: dict, fairness_score: int, score_reasons: list) -> dict:
@@ -107,7 +113,7 @@ Return ONLY valid JSON.
         return messages
     
     except Exception as e:
-        print(f"[NEGOTIATOR ERROR] {str(e)}")
+        logger.error(f"Negotiator error: {str(e)}", exc_info=True)
         return _generate_template_messages(vehicle, monthly, apr, fairness_score, score_reasons)
 
 
@@ -149,9 +155,6 @@ market terms. Please provide documentation supporting these charges or submit re
     }
 
     # ============================================================
-# PUBLIC ENTRY POINT (USED BY STREAMLIT APP)
-# =============================
-# ============================================================
 # PUBLIC ENTRY POINT (USED BY STREAMLIT APP)
 # ============================================================
 

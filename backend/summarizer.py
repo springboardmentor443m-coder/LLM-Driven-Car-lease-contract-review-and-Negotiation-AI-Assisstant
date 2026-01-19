@@ -5,13 +5,20 @@ Generate AI-powered contract summaries using Groq LLM
 
 import os
 import json
+import traceback
 from groq import Groq
-from dotenv import load_dotenv
+from config import settings
+from logger import logger
 
-load_dotenv()
-
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
+GROQ_API_KEY = settings.GROQ_API_KEY
+if GROQ_API_KEY:
+    try:
+        groq_client = Groq(api_key=GROQ_API_KEY)
+    except Exception as e:
+        logger.error(f"Failed to initialize Groq client in summarizer: {e}", exc_info=True)
+        groq_client = None
+else:
+    groq_client = None
 
 
 def call_summary_llm(raw_text: str, structured_data: dict) -> dict:
@@ -117,7 +124,7 @@ Return ONLY valid JSON, no markdown formatting."""
             return summary
             
         except json.JSONDecodeError as e:
-            print(f"[JSON PARSE ERROR] {e}: {result_text[:200]}")
+            logger.warning(f"JSON parse error in summary: {e}. Response preview: {result_text[:200]}")
             # Return fallback with actual data
             return {
                 "plain_summary": f"This is a contract for a {vehicle_info} with monthly payments of {monthly} over {term} months at {apr} interest. Review all terms carefully before signing.",
@@ -132,9 +139,7 @@ Return ONLY valid JSON, no markdown formatting."""
             }
     
     except Exception as e:
-        print(f"[SUMMARY LLM ERROR] {str(e)}")
-        import traceback
-        print(traceback.format_exc())
+        logger.error(f"Summary LLM error: {str(e)}", exc_info=True)
         
         # Fallback using structured data
         return {
@@ -148,49 +153,6 @@ Return ONLY valid JSON, no markdown formatting."""
             ],
             "confidence": "low"
         }
-        # ============================================================
-# PUBLIC ENTRY POINT (USED BY STREAMLIT APP)
-# ============================================================
-
-def summarize_contract(extracted: dict) -> dict:
-    """
-    Public summarization entry point.
-    Accepts extraction output and returns a clean summary object.
-    """
-
-    raw_text = extracted.get("raw_text", "")
-
-    if not raw_text.strip():
-        return {
-            "plain_summary": "No readable text found to summarize.",
-            "red_flags": [],
-            "confidence": "low"
-        }
-
-    try:
-        # 🔁 CHANGE THIS LINE if your internal function name differs
-        summary = summarize_with_llm(raw_text)
-
-        if not isinstance(summary, dict):
-            return {
-                "plain_summary": str(summary),
-                "red_flags": [],
-                "confidence": "medium"
-            }
-
-        return {
-            "plain_summary": summary.get("plain_summary", ""),
-            "red_flags": summary.get("red_flags", []),
-            "confidence": summary.get("confidence", "medium")
-        }
-
-    except Exception as e:
-        return {
-            "plain_summary": f"Summary generation failed: {str(e)}",
-            "red_flags": [],
-            "confidence": "low"
-        }
-
         # ============================================================
 # PUBLIC ENTRY POINT (USED BY STREAMLIT APP)
 # ============================================================

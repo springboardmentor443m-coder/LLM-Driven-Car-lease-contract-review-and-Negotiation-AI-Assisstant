@@ -2,6 +2,7 @@
 # app.py — Car Contract AI Backend (Complete with Chatbot)
 # ================================================================
 
+
 from fastapi import FastAPI, UploadFile, File, HTTPException, Request
 from fastapi.responses import StreamingResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -16,6 +17,8 @@ from typing import Optional, Dict
 import io
 import sys
 
+from logger import logger
+
 # OCR
 from pdf2image import convert_from_path
 import pytesseract
@@ -29,37 +32,47 @@ from fairness_engine import calculate_fairness_score
 from negotiator import generate_negotiation_messages
 
 # LLM provider
-from dotenv import load_dotenv
+
 from groq import Groq
+from config import settings
 
-load_dotenv()
+# ================================================================
+# SETTINGS LOADING
+# ================================================================
+GROQ_API_KEY = settings.GROQ_API_KEY
+POPPLER_PATH = settings.POPPLER_PATH
+TESSERACT_CMD = settings.TESSERACT_CMD
+MAX_FILE_SIZE = settings.MAX_FILE_SIZE
+ALLOWED_ORIGINS = settings.get_allowed_origins_list()
 
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-groq_client = Groq(api_key=GROQ_API_KEY)
+if not GROQ_API_KEY:
+    logger.warning("WARNING: GROQ_API_KEY not found. Some features may not work.")
+    groq_client = None
+else:
+    try:
+        groq_client = Groq(api_key=GROQ_API_KEY)
+    except Exception as e:
+        logger.error(f"Failed to initialize Groq client: {e}", exc_info=True)
+        groq_client = None
 
 # ================================================================
 # FASTAPI SETUP
 # ================================================================
 app = FastAPI(title="Car Contract AI Backend")
 
+# CORS Configuration - Allow specific origins instead of all
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
+    allow_origins=ALLOWED_ORIGINS,
+    allow_methods=["GET", "POST"],
     allow_headers=["*"],
     allow_credentials=True,
 )
 
-# ================================================================
-# GLOBAL CONFIG
-# ================================================================
-POPPLER_PATH = os.getenv("POPPLER_PATH")
-TESSERACT_CMD = os.getenv("TESSERACT_CMD")
-
 if TESSERACT_CMD:
     pytesseract.pytesseract.tesseract_cmd = TESSERACT_CMD
 
-print("DEBUG POPPLER_PATH =", POPPLER_PATH)
+logger.debug(f"DEBUG POPPLER_PATH = {POPPLER_PATH}")
 
 # ================================================================
 # UTILITIES
@@ -94,7 +107,7 @@ def extract_text_from_pdf(pdf_path, poppler_path=None, dpi=300):
             txt = pytesseract.image_to_string(img)
             out.append(f"--- PAGE {i+1} ---\n{txt}")
         except Exception as e:
-            print("[OCR ERROR] Page", i+1, e, file=sys.stderr)
+            logger.error(f"[OCR ERROR] Page {i+1}: {e}", exc_info=True)
 
     return "\n".join(out)
 
@@ -150,7 +163,10 @@ def keep_only_important_fields(data: dict) -> dict:
 # ================================================================
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    print("[UNHANDLED ERROR]\n", traceback.format_exc(), file=sys.stderr)
+    # Don't catch HTTPException - let FastAPI handle it
+    if isinstance(exc, HTTPException):
+        raise exc
+    logger.error(f"[UNHANDLED ERROR]\n{traceback.format_exc()}", exc_info=True)
     return JSONResponse(status_code=500, content={"detail": "Internal server error."})
 
 
@@ -165,13 +181,25 @@ def home():
 # ================================================================
 # EXTRACTION ENDPOINT
 # ================================================================
+
 @app.post("/extract")
 async def extract(file: UploadFile = File(...)):
     tmp_path = None
     try:
+        # Validate file type
+        if file.content_type != "application/pdf":
+            raise HTTPException(status_code=400, detail="Only PDF files are allowed")
+        
         pdf_bytes = await file.read()
         if not pdf_bytes:
             raise HTTPException(status_code=400, detail="Uploaded file is empty")
+        
+        # Validate file size
+        if len(pdf_bytes) > MAX_FILE_SIZE:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"File size exceeds maximum allowed size of {MAX_FILE_SIZE / (1024*1024):.1f}MB"
+            )
 
         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
             tmp.write(pdf_bytes)
@@ -217,9 +245,12 @@ async def extract(file: UploadFile = File(...)):
             "ocr_method": method
         }
 
+    except HTTPException:
+        # Re-raise HTTPException as-is (these are intentional client errors)
+        raise
     except Exception as e:
-        print("[EXTRACT ERROR]", traceback.format_exc(), file=sys.stderr)
-        raise HTTPException(500, f"Extraction failed: {e}")
+        logger.error(f"[EXTRACT ERROR] {traceback.format_exc()}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Extraction failed: {e}")
 
     finally:
         if tmp_path and os.path.exists(tmp_path):
@@ -316,9 +347,12 @@ async def summarize_contract(payload: dict):
             "negotiation_tips": negotiation
         }
 
+    except HTTPException:
+        # Re-raise HTTPException as-is
+        raise
     except Exception as e:
-        print("[SUMMARIZE ERROR]", traceback.format_exc(), file=sys.stderr)
-        raise HTTPException(500, f"Summary failed: {e}")
+        logger.error(f"[SUMMARIZE ERROR] {traceback.format_exc()}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Summary failed: {e}")
 
 
 # ================================================================
@@ -352,6 +386,9 @@ def compare_offers(payload: dict):
 async def chat(payload: dict):
     """Answer user questions about their contract using AI."""
     try:
+        if not groq_client:
+            return {"answer": "AI service is not available. Please check API configuration."}
+        
         raw_text = payload.get("raw_text", "")
         extracted_fields = payload.get("extracted_fields", {})
         question = payload.get("question", "")
@@ -395,7 +432,7 @@ Provide a clear, helpful answer:"""
         return {"answer": answer}
         
     except Exception as e:
-        print(f"[CHAT ERROR] {traceback.format_exc()}", file=sys.stderr)
+        logger.error(f"[CHAT ERROR] {traceback.format_exc()}", exc_info=True)
         return {"answer": f"I encountered an error: {str(e)}. Please try again."}
 
 

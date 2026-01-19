@@ -57,7 +57,7 @@ def calculate_fairness_score(structured_data: dict) -> tuple:
         except:
             pass
     
-    # 3. Check Documentation/Acquisition Fees - MORE STRICT
+    # 3. Check Documentation/Acquisition Fees - IMPROVED THRESHOLDS
     doc_fee = core.get("documentation_fee", "")
     if doc_fee:
         try:
@@ -68,6 +68,9 @@ def calculate_fairness_score(structured_data: dict) -> tuple:
             elif fee_val > 500:
                 score -= 10
                 reasons.append(f"High documentation fee: ${fee_val} (deduct 10 points)")
+            elif fee_val > 200:  # Lower threshold - $200+ is notable
+                score -= 5
+                reasons.append(f"Moderate documentation fee: ${fee_val} (deduct 5 points)")
         except:
             pass
     
@@ -81,6 +84,9 @@ def calculate_fairness_score(structured_data: dict) -> tuple:
             elif fee_val > 800:
                 score -= 10
                 reasons.append(f"High acquisition fee: ${fee_val} (deduct 10 points)")
+            elif fee_val > 400:  # Lower threshold
+                score -= 5
+                reasons.append(f"Moderate acquisition fee: ${fee_val} (deduct 5 points)")
         except:
             pass
     
@@ -166,16 +172,99 @@ def calculate_fairness_score(structured_data: dict) -> tuple:
         except:
             pass
     
-    # 9. Check other fees - COUNT THEM
+    # 9. Check other fees - IMPROVED: Check both count AND total amount
     other_fees = core.get("other_fees", [])
     if other_fees:
         fee_count = len(other_fees)
+        
+        # Calculate total of other fees
+        total_other_fees = 0
+        for fee_str in other_fees:
+            try:
+                # Extract numeric value from fee string
+                fee_clean = str(fee_str).replace("$", "").replace(",", "").strip()
+                # Handle list format like "['90', '425']"
+                if "[" in fee_clean:
+                    import re
+                    numbers = re.findall(r'\d+', fee_clean)
+                    for num in numbers:
+                        total_other_fees += float(num)
+                else:
+                    total_other_fees += float(fee_clean)
+            except:
+                pass
+        
+        # Penalize by count
         if fee_count > 5:
             score -= 15
             reasons.append(f"Excessive additional fees ({fee_count} fees) (deduct 15 points)")
         elif fee_count > 3:
             score -= 10
             reasons.append(f"Multiple additional fees ({fee_count} fees) (deduct 10 points)")
+        elif fee_count > 1:
+            score -= 5
+            reasons.append(f"Several additional fees ({fee_count} fees) (deduct 5 points)")
+        
+        # Penalize by total amount
+        if total_other_fees > 1000:
+            score -= 15
+            reasons.append(f"High total additional fees: ${total_other_fees:.2f} (deduct 15 points)")
+        elif total_other_fees > 500:
+            score -= 10
+            reasons.append(f"Significant additional fees: ${total_other_fees:.2f} (deduct 10 points)")
+        elif total_other_fees > 200:
+            score -= 5
+            reasons.append(f"Moderate additional fees: ${total_other_fees:.2f} (deduct 5 points)")
+    
+    # 9b. Check TOTAL FEES vs Loan Amount (NEW - Important!)
+    vehicle_price = financial.get("vehicle_price", "") or core.get("vehicle_price", "") or core.get("msrp", "")
+    if vehicle_price:
+        try:
+            price_val = float(str(vehicle_price).replace("$", "").replace(",", "").strip())
+            
+            # Calculate total fees
+            total_fees = 0
+            if doc_fee:
+                try:
+                    total_fees += float(str(doc_fee).replace("$", "").replace(",", "").strip())
+                except:
+                    pass
+            if acq_fee:
+                try:
+                    total_fees += float(str(acq_fee).replace("$", "").replace(",", "").strip())
+                except:
+                    pass
+            if other_fees:
+                for fee_str in other_fees:
+                    try:
+                        fee_clean = str(fee_str).replace("$", "").replace(",", "").strip()
+                        if "[" in fee_clean:
+                            import re
+                            numbers = re.findall(r'\d+', fee_clean)
+                            for num in numbers:
+                                total_fees += float(num)
+                        else:
+                            total_fees += float(fee_clean)
+                    except:
+                        pass
+            
+            # Check fee-to-loan ratio
+            if price_val > 0 and total_fees > 0:
+                fee_ratio = total_fees / price_val
+                if fee_ratio > 0.05:  # Fees > 5% of loan
+                    score -= 20
+                    reasons.append(f"Very high total fees: ${total_fees:.2f} ({fee_ratio:.1%} of loan amount) (deduct 20 points)")
+                elif fee_ratio > 0.03:  # Fees > 3% of loan
+                    score -= 15
+                    reasons.append(f"High total fees: ${total_fees:.2f} ({fee_ratio:.1%} of loan amount) (deduct 15 points)")
+                elif fee_ratio > 0.02:  # Fees > 2% of loan
+                    score -= 10
+                    reasons.append(f"Moderate total fees: ${total_fees:.2f} ({fee_ratio:.1%} of loan amount) (deduct 10 points)")
+                elif total_fees > 500:  # Absolute amount check
+                    score -= 5
+                    reasons.append(f"Notable total fees: ${total_fees:.2f} (deduct 5 points)")
+        except:
+            pass
     
     # 10. Risk analysis integration - MORE WEIGHT
     high_risks = risk.get("high_risks", [])

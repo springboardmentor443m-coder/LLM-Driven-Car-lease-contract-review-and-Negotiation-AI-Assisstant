@@ -1,31 +1,32 @@
-import os
 import requests
+import os
 from dotenv import load_dotenv
 
 load_dotenv()
 
-API_KEY = os.getenv("RAPIDAPI_KEY")
+API_KEY = os.getenv("VIN_API_KEY")
+API_HOST = os.getenv("VIN_API_HOST")
 
-def get_vehicle_details(vin):
-    url = "https://carapi.app/api/vin/" + vin
+VIN = "1GTG6CENOL1139305"  
 
-    headers = {
-        "X-RapidAPI-Key": API_KEY
-    }
+url = "https://vehicle-pricing-api.p.rapidapi.com/vehicle"  
 
-    response = requests.get(url, headers=headers)
+headers = {
+    "X-RapidAPI-Key": API_KEY,
+    "X-RapidAPI-Host": API_HOST,
+    "Accept": "application/json"
+}
 
-    if response.status_code == 200:
-        return response.json()
-    else:
-        return {
-            "error": "Failed to fetch vehicle data",
-            "status_code": response.status_code
-        }
+params = {
+    "vin": VIN
+}
 
+response = requests.get(url, headers=headers, params=params)
 
-if __name__ == "__main__":
-    test_vin = "1HGCM82633A004352"
-    data = get_vehicle_details(test_vin)
-    print(data)
+print("Vehicle Data Retrieved Successfully")
+print("Status Code:", response.status_code)
 
+with open("../data/vin_api_response.txt", "w", encoding="utf-8") as f:
+    f.write(response.text)
+
+print("VIN API response saved successfully")

@@ -1,0 +1,240 @@
+body {
+  margin:0;
+  background:#F4FCEE; /* very light pista */
+  font-family: Inter, sans-serif;
+}
+
+
+/* Top bar */
+.topbar {
+  background:white;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:16px 28px;
+  border-bottom:1px solid #E5E7EB;
+}
+
+.brand {
+  font-weight:700;
+  font-size:20px;
+  color:#1F2937; /* Neutral text */
+}
+
+.new-upload-btn {
+  padding:8px 14px;
+  border:1px solid #0F9D58; /* Primary */
+  background:white;
+  color:#0F9D58;
+  border-radius:6px;
+  cursor:pointer;
+}
+.new-upload-btn:hover {
+  background:#0F9D58;
+  color:white;
+}
+
+/* Main Layout */
+.layout {
+  display:flex;
+  height:calc(100vh - 60px);
+}
+
+/* Sidebar */
+.sidebar {
+  width:220px;
+  background:white;
+  border-right:1px solid #E5E7EB;
+  padding-top:20px;
+}
+
+.nav-item {
+  padding:12px 18px;
+  cursor:pointer;
+  font-size:15px;
+  color:#374151; /* Gray text */
+}
+
+.nav-item.active {
+  background:#0F9D58; /* Primary */
+  color:white;
+  font-weight:600;
+  border-radius:6px;
+}
+
+/* Main Content */
+.main {
+  flex:1;
+  padding:30px;
+  overflow-y:auto;
+}
+
+.section-title {
+  font-size:22px;
+  font-weight:600;
+  margin-bottom:12px;
+  color:#1F2937;
+}
+
+/* Card Components */
+.card {
+  background:white;
+  border:1px solid #E5E7EB;
+  padding:20px;
+  border-radius:10px;
+  margin-bottom:20px;
+  box-shadow:0px 2px 6px rgba(0,0,0,0.04);
+}
+
+.list {
+  margin-left:24px;
+  line-height:1.45;
+}
+
+/* Chat Box */
+.chat-box {
+  background:white;
+  border:1px solid #E5E7EB;
+  padding:12px;
+  height:350px;
+  overflow-y:auto;
+  margin-bottom:10px;
+}
+
+/* Chat Input Row */
+.chat-input-row {
+  display:flex;
+  gap:10px;
+  margin-top:10px;
+}
+
+#chatInput {
+  flex:1;
+  padding:10px 12px;
+  border:1px solid #CFCFCF;
+  border-radius:6px;
+  font-size:15px;
+}
+
+/* Chat Send Button */
+#chatSend {
+  padding:10px 16px;
+  border:none;
+  background:#0F9D58; /* Primary */
+  color:white;
+  border-radius:6px;
+  cursor:pointer;
+  font-size:15px;
+}
+#chatSend:hover {
+  background:#0B8043; /* Darker Primary */
+}
+
+/* Upload Landing */
+.upload-container {
+  max-width:700px;
+  margin:120px auto;
+  text-align:center;
+}
+
+.hero-title {
+  font-size:36px;
+  font-weight:700;
+  color:#1F2937;
+}
+
+.hero-desc {
+  font-size:18px;
+  color:#4B5563;
+  max-width:600px;
+  margin:0 auto 30px;
+}
+
+.upload-btn {
+  padding:12px 20px;
+  background:#0A0A0A; /* Primary */
+  color:white;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+}
+.upload-btn:hover {
+  background:#0B8043; /* Hover */
+}
+
+.hidden {
+  display:none;
+}
+
+/* Loading Overlay */
+#loadingOverlay {
+  position:fixed;
+  inset:0;
+  background:rgba(255,255,255,0.8);
+  display:none;
+  justify-content:center;
+  align-items:center;
+  font-size:22px;
+  font-weight:600;
+  color:#0F9D58;
+}
+
+/* Summary text styling */
+.card p {
+  margin: 6px 0;
+  white-space: pre-wrap;
+}
+
+.summary-card {
+  font-size: 15.5px;
+  line-height: 1.45;
+  text-align: left;
+  padding: 18px 22px;
+}
+
+.summary-card b {
+  font-weight: 600;
+}
+
+.summary-card br {
+  line-height: 0.8;
+}
+
+.summary h3 {
+  font-size: 16px;
+  font-weight: 700;
+  margin-top: 10px;
+  margin-bottom: 4px;
+  color:#1F2937;
+}
+
+.summary p, .summary div {
+  line-height: 1.32;
+  font-size: 15px;
+}
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100vw;
+    height: 100vh;
+}
+.bg {
+    background-image: url("./images/crrr.avif");
+    background-size: cover;
+    background-position: right center;
+    background-repeat: no-repeat;
+    
+    width: 100vw;
+    height: 100vh;
+
+    display: flex;
+    align-items: center;         /* vertical center */
+}
+
+.upload-container {
+    width: 500px;
+    text-align: left;
+    margin-left: 120px;          /* push left side */
+}
+
+

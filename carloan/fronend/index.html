@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>LeaseAI</title>
+    <link rel="stylesheet" href="styles.css">
+    <script defer src="app.js"></script>
+</head>
+<body class="bg">
+
+    <div class="upload-container">
+        <h1 class="hero-title">Lease Contract Intelligence</h1>
+        <p class="hero-desc"><b>
+            Upload your vehicle lease agreement to receive insights, fairness scoring,
+            negotiation advice and VIN decoding.
+        </b></p>
+        <input type="file" id="fileInput" accept=".pdf" class="hidden">
+        <button class="upload-btn" onclick="document.getElementById('fileInput').click()">Upload Lease PDF</button>
+    </div>
+
+</body>
+
+<div id="loadingOverlay">Analyzing document...</div>
+
+</body>
+</html>

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>LeaseAI Dashboard</title>
+<link rel="stylesheet" href="styles.css">
+<script defer src="app.js"></script>
+</head>
+<body>
+
+<div class="topbar">
+    <div class="brand">LeaseAI</div>
+    <button class="new-upload-btn" onclick="window.location='index.html'"><b>NEW UPLOAD</b></button>
+</div>
+
+<div class="layout">
+    <aside class="sidebar">
+        <div class="nav-item active" data-section="summary">Summary</div>
+        <div class="nav-item" data-section="fairness">Fairness Score</div>
+        <div class="nav-item" data-section="tips">Negotiation Tips</div>
+        <div class="nav-item" data-section="vin">VIN Info</div>
+        <div class="nav-item" data-section="chat">Chat</div>
+    </aside>
+
+    <main class="main">
+        <div id="summary"></div>
+        <div id="fairness" style="display:none;"></div>
+        <div id="tips" style="display:none;"></div>
+        <div id="vin" style="display:none;"></div>
+        <div id="chat" style="display:none;">
+            <div id="chatBox" class="chat-box"></div>
+            <div class="chat-input-row">
+                <input id="chatInput" placeholder="Ask about your lease...">
+                <button id="chatSend">Send</button>
+            </div>
+        </div>
+    </main>
+</div>
+
+</body>
+</html>

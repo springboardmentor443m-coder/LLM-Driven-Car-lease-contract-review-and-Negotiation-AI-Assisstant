@@ -1,43 +1,56 @@
-from transformers import pipeline
+from backend.gemini_client import get_gemini_client
 
-from transformers import pipeline
+# Create Gemini client
+client = get_gemini_client()
 
-chatbot_pipeline = pipeline(
-    "text2text-generation",
-    model="google/flan-t5-small",
-    max_length=256
-)
-
-def chatbot_response(user_question, contract_text, vehicle_data=None):
+def chatbot_response(user_question, contract_text=None, vehicle_data=None):
     """
-    Context-aware chatbot for lease contracts
+    Gemini-powered AI chatbot for car lease assistance
     """
 
-    vehicle_context = ""
+    context = ""
+
+    if contract_text:
+        context += f"""
+Contract Extract:
+{contract_text[:1500]}
+"""
+
     if vehicle_data:
-        vehicle_context = f"""
+        context += f"""
 Vehicle Details:
-Make: {vehicle_data.get('Make')}
-Model: {vehicle_data.get('Model')}
-Year: {vehicle_data.get('ModelYear')}
-Fuel: {vehicle_data.get('FuelTypePrimary')}
+Make: {vehicle_data.get("Make")}
+Model: {vehicle_data.get("Model")}
+Year: {vehicle_data.get("ModelYear")}
+Fuel Type: {vehicle_data.get("FuelTypePrimary")}
 """
 
     prompt = f"""
-You are an expert car lease assistant.
+You are an intelligent AI assistant specialized in car lease and loan guidance.
 
-Use the contract and vehicle details to answer clearly.
+Your tasks:
+- Answer user questions clearly
+- Explain contract risks
+- Give negotiation advice
+- Help with EMI and pricing doubts
 
-Contract:
-{contract_text}
+Use the provided context if available.
 
-{vehicle_context}
+Context:
+{context}
 
 User Question:
 {user_question}
 
-Answer:
+Give a clear, friendly, professional answer.
 """
 
-    result = chatbot_pipeline(prompt)
-    return result[0]["generated_text"]
+    try:
+        response = client.models.generate_content(
+            model="gemini-3-flash-preview",
+            contents=prompt
+        )
+        return response.text
+
+    except Exception:
+        return "⚠️ AI service temporarily unavailable. Please try again later."

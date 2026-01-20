@@ -1,9 +1,11 @@
 import streamlit as st
 import sys
 import os
+import plotly.graph_objects as go
 
-# FIX BACKEND IMPORT PATH
-
+# --------------------------------------------------
+# PATH FIX
+# --------------------------------------------------
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if ROOT_DIR not in sys.path:
     sys.path.append(ROOT_DIR)
@@ -11,269 +13,274 @@ if ROOT_DIR not in sys.path:
 from backend.ocr_extractor import extract_text, extract_vin
 from backend.vin_decoder import decode_vin
 from backend.llm_analyzer import analyze_contract, analyze_with_llm
-from backend.price_estimator import estimate_price
 from backend.chatbot import chatbot_response
 
+# --------------------------------------------------
 # PAGE CONFIG
-
+# --------------------------------------------------
 st.set_page_config(
     page_title="Car Lease AI Assistant",
-    page_icon="🚗",
+    page_icon="🚘",
     layout="wide"
 )
 
-# GLOBAL GLASSMORPHISM + CAR THEME
-
-st.markdown(
-    """
+# --------------------------------------------------
+# CUSTOM CSS FUNCTION
+# --------------------------------------------------
+def load_luxury_css():
+    st.markdown("""
     <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+
+    html, body, [class*="css"] {
+        font-family: 'Inter', sans-serif;
+    }
+
     .stApp {
-        background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-        color: white;
-        font-family: 'Segoe UI', sans-serif;
+        background-color: #0E1117;
+        color: #C0C0C0;
     }
 
     section[data-testid="stSidebar"] {
-        background: rgba(0, 0, 0, 0.55);
-        backdrop-filter: blur(14px);
-        border-right: 1px solid rgba(255,255,255,0.1);
+        background-color: #11151C;
+        border-right: 1px solid #1f2937;
     }
 
-    .glass {
-        background: rgba(255, 255, 255, 0.12);
-        border-radius: 18px;
-        padding: 22px;
-        backdrop-filter: blur(14px);
-        border: 1px solid rgba(255, 255, 255, 0.25);
-        box-shadow: 0 10px 35px rgba(0, 0, 0, 0.4);
-        margin-bottom: 22px;
+    h1, h2, h3 {
+        color: #ffffff;
     }
 
     .hero {
-        padding: 40px;
         text-align: center;
+        padding: 50px 20px;
     }
 
     .hero h1 {
-        font-size: 42px;
+        font-size: 46px;
         font-weight: 700;
     }
 
     .hero p {
-        color: #d0d0d0;
         font-size: 18px;
+        color: #9ca3af;
+    }
+
+    .metric-card {
+        background: linear-gradient(145deg, #141824, #0b0f17);
+        border-radius: 14px;
+        padding: 22px;
+        text-align: center;
+        border: 1px solid #1f2937;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
+
+    .metric-card h2 {
+        color: #007BFF;
+        font-size: 32px;
+        margin-bottom: 6px;
+    }
+
+    .metric-card span {
+        color: #9ca3af;
+        font-size: 14px;
+    }
+
+    button, input, textarea {
+        border-radius: 10px !important;
     }
 
     .stButton > button {
-        background: linear-gradient(135deg, #ff512f, #dd2476);
+        background: linear-gradient(135deg, #007BFF, #0056b3);
         color: white;
-        border-radius: 30px;
-        padding: 10px 28px;
-        font-size: 16px;
+        border-radius: 10px;
         border: none;
-        transition: 0.3s ease;
+        padding: 10px 22px;
+        font-weight: 600;
     }
 
     .stButton > button:hover {
-        transform: scale(1.05);
-        box-shadow: 0 0 20px rgba(255, 81, 47, 0.8);
+        background: linear-gradient(135deg, #0056b3, #003f88);
     }
 
-    textarea {
-        background: rgba(0,0,0,0.45) !important;
-        color: white !important;
-        border-radius: 12px !important;
-    }
-
-    div[data-testid="metric-container"] {
-        background: rgba(255,255,255,0.15);
-        border-radius: 14px;
-        padding: 15px;
-    }
     </style>
-    """,
-    unsafe_allow_html=True
-)
+    """, unsafe_allow_html=True)
 
+
+load_luxury_css()
+
+# --------------------------------------------------
 # SESSION STATE
+# --------------------------------------------------
+st.session_state.setdefault("chat_history", [])
+st.session_state.setdefault("contract_text", "")
+st.session_state.setdefault("vehicle_data", None)
+st.session_state.setdefault("ai_result", None)
 
-if "ai_result" not in st.session_state:
-    st.session_state.ai_result = None
-
-if "chat_history" not in st.session_state:
-    st.session_state.chat_history = []
-
-extracted_text = ""
-vehicle_data = None
-
-# SIDEBAR NAVIGATION (STANDARD PRODUCT STYLE)
+# --------------------------------------------------
+# SIDEBAR – VEHICLE FILTERS
+# --------------------------------------------------
 with st.sidebar:
-    st.title("🚗 Car Lease AI")
-    st.caption("Smart Contract Assistant")
+    st.title("🚘 Vehicle Filters")
+
+    st.selectbox("Brand", ["All", "BMW", "Audi", "Mercedes", "Porsche"])
+    st.slider("Model Year", 2015, 2025, (2019, 2024))
+    st.slider("Price Range ($)", 20000, 200000, (40000, 120000))
+
+    st.divider()
 
     page = st.radio(
-        "Navigate",
+        "Navigation",
         ["🏠 Dashboard", "📄 Contract Review", "💬 AI Assistant", "🚘 VIN Decoder"]
     )
 
-    st.markdown("---")
-    st.markdown(
-        """
-        ✔ OCR Contract Reading  
-        ✔ Risk Detection  
-        ✔ AI Review  
-        ✔ Price Estimation  
-        ✔ Chatbot Support  
-        """
-    )
-
-#  DASHBOARD (HOME PAGE)
-
+# --------------------------------------------------
+# DASHBOARD
+# --------------------------------------------------
 if page == "🏠 Dashboard":
 
-    st.markdown(
-        """
-        <div class="glass hero">
-            <h1>🚗 Car Lease AI Assistant</h1>
-            <p>
-            Upload contracts • Detect risks • Estimate true cost • Negotiate smarter
-            </p>
+    st.markdown("""
+    <div class="hero">
+        <h1>Luxury Car Lease Intelligence</h1>
+        <p>AI-powered insights for premium automotive contracts</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.divider()
+
+    # METRIC CARDS
+    c1, c2, c3 = st.columns(3)
+
+    with c1:
+        st.markdown("""
+        <div class="metric-card">
+            <h2>250 km/h</h2>
+            <span>Top Speed</span>
         </div>
-        """,
-        unsafe_allow_html=True
+        """, unsafe_allow_html=True)
+
+    with c2:
+        st.markdown("""
+        <div class="metric-card">
+            <h2>450 HP</h2>
+            <span>Horsepower</span>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with c3:
+        st.markdown("""
+        <div class="metric-card">
+            <h2>14 km/l</h2>
+            <span>Efficiency</span>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.divider()
+
+    # FEATURE GALLERY
+    with st.expander("🚗 Feature Gallery"):
+        st.image(
+            "https://via.placeholder.com/1200x400?text=Luxury+Car+Showcase",
+            use_container_width=True
+        )
+        st.write("Premium interiors • Advanced safety • AI-driven performance")
+
+    st.divider()
+
+    # PERFORMANCE CHART
+    st.subheader("📈 Performance Curve")
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        x=[0, 20, 40, 60, 80, 100],
+        y=[0, 60, 120, 170, 210, 250],
+        mode="lines+markers",
+        line=dict(color="#007BFF", width=4)
+    ))
+
+    fig.update_layout(
+        template="plotly_dark",
+        paper_bgcolor="#0E1117",
+        plot_bgcolor="#0E1117",
+        xaxis_title="Time (s)",
+        yaxis_title="Speed (km/h)"
     )
 
-    col1, col2, col3 = st.columns(3)
+    st.plotly_chart(fig, use_container_width=True)
 
-    with col1:
-        st.markdown(
-            """
-            <div class="glass">
-                <h3>📄 Contract Analysis</h3>
-                <p>OCR-based extraction and risk detection from lease agreements.</p>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-    with col2:
-        st.markdown(
-            """
-            <div class="glass">
-                <h3>🧠 AI Review</h3>
-                <p>LLM-powered legal insights and negotiation suggestions.</p>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-    with col3:
-        st.markdown(
-            """
-            <div class="glass">
-                <h3>💰 Cost Estimation</h3>
-                <p>Understand real cost per mile and long-term lease impact.</p>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-#  CONTRACT REVIEW PAGE
-
+# --------------------------------------------------
+# CONTRACT REVIEW (FEATURE UNCHANGED)
+# --------------------------------------------------
 elif page == "📄 Contract Review":
 
-    st.markdown('<div class="glass">', unsafe_allow_html=True)
     uploaded_file = st.file_uploader(
-        "📄 Upload Car Lease Agreement",
+        "Upload Lease Contract",
         type=["pdf", "png", "jpg", "jpeg"]
     )
-    st.markdown('</div>', unsafe_allow_html=True)
 
     if uploaded_file:
         os.makedirs("data", exist_ok=True)
-        file_path = os.path.join("data", uploaded_file.name)
+        path = os.path.join("data", uploaded_file.name)
 
-        with open(file_path, "wb") as f:
+        with open(path, "wb") as f:
             f.write(uploaded_file.getbuffer())
 
-        extracted_text = extract_text(file_path)
+        text = extract_text(path)
+        st.session_state.contract_text = text
 
-        if extracted_text.strip():
+        tabs = st.tabs(["📄 Text", "⚠ Risks", "🤖 AI Review"])
 
-            tab1, tab2, tab3 = st.tabs(
-                ["📄 Contract Text", "⚠ Risk Analysis", "🤖 AI Review"]
-            )
+        with tabs[0]:
+            st.text_area("Extracted Contract", text, height=400)
 
-            # TAB 1
-            with tab1:
-                st.markdown('<div class="glass">', unsafe_allow_html=True)
-                st.text_area("Extracted Text", extracted_text, height=400)
-                st.markdown('</div>', unsafe_allow_html=True)
+        with tabs[1]:
+            vin = extract_vin(text)
+            if vin:
+                data = decode_vin(vin)
+                st.session_state.vehicle_data = data
+                st.success(f"VIN Detected: {vin}")
+                st.write(data)
 
-            # TAB 2
-            with tab2:
-                st.markdown('<div class="glass">', unsafe_allow_html=True)
+            for r in analyze_contract(text):
+                st.error(r["risk"])
+                st.info(r["negotiation_tip"])
 
-                vin = extract_vin(extracted_text)
-                if vin:
-                    vehicle_data = decode_vin(vin)
-                    st.success(f"VIN Detected: {vin}")
-                    st.write(vehicle_data)
+        with tabs[2]:
+            if st.button("Run AI Analysis"):
+                st.session_state.ai_result = analyze_with_llm(text)
+            if st.session_state.ai_result:
+                st.markdown(st.session_state.ai_result)
 
-                risks = analyze_contract(extracted_text)
-                for r in risks:
-                    st.error(r["risk"])
-                    st.info(r["negotiation_tip"])
-
-                st.markdown('</div>', unsafe_allow_html=True)
-
-            # TAB 3
-            with tab3:
-                st.markdown('<div class="glass">', unsafe_allow_html=True)
-
-                if st.button("Run AI Contract Analysis"):
-                    with st.spinner("Analyzing..."):
-                        st.session_state.ai_result = analyze_with_llm(extracted_text)
-
-                if st.session_state.ai_result:
-                    st.markdown(st.session_state.ai_result)
-
-                st.markdown('</div>', unsafe_allow_html=True)
-
-# AI CHATBOT
-
+# --------------------------------------------------
+# AI ASSISTANT
+# --------------------------------------------------
 elif page == "💬 AI Assistant":
 
-    st.markdown('<div class="glass">', unsafe_allow_html=True)
-    st.subheader("💬 Lease Assistant")
+    st.subheader("💬 Gemini Lease Assistant")
 
-    question = st.text_input("Ask anything about lease, EMI, risks, negotiation")
+    q = st.text_input("Ask anything about your lease")
 
     if st.button("Ask AI"):
-        reply = chatbot_response(question, extracted_text, vehicle_data)
-        st.session_state.chat_history.append(("You", question))
+        reply = chatbot_response(
+            q,
+            st.session_state.contract_text,
+            st.session_state.vehicle_data
+        )
+        st.session_state.chat_history.append(("You", q))
         st.session_state.chat_history.append(("AI", reply))
 
     for sender, msg in st.session_state.chat_history:
         st.markdown(f"**{sender}:** {msg}")
 
-    st.markdown('</div>', unsafe_allow_html=True)
-
-#  VIN DECODER
-
+# --------------------------------------------------
+# VIN DECODER
+# --------------------------------------------------
 else:
 
-    st.markdown('<div class="glass">', unsafe_allow_html=True)
-    st.subheader("🔍 VIN Decoder")
-
     vin_input = st.text_input("Enter VIN")
-
-    if st.button("Decode"):
-        vehicle_data = decode_vin(vin_input)
-        if vehicle_data:
-            st.success("Decoded Successfully")
-            st.write(vehicle_data)
+    if st.button("Decode VIN"):
+        data = decode_vin(vin_input)
+        if data:
+            st.success("Vehicle Decoded")
+            st.write(data)
         else:
             st.error("Invalid VIN")
-
-    st.markdown('</div>', unsafe_allow_html=True)

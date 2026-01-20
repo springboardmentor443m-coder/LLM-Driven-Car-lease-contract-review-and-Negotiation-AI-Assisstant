@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+pytesseract
+pdf2image
+python-multipart
+Pillow
+requests
+beautifulsoup4
+lxml
+PyPDF2
+reportlab
+groq
+python-dotenv

@@ -4,14 +4,11 @@ from google import genai
 
 load_dotenv()
 
-# ✅ Create Gemini client (NO api_version)
+# Create Gemini client 
 client = genai.Client(
     api_key=os.getenv("GEMINI_API_KEY")
 )
-
-# -------------------------------
 # RULE-BASED ANALYSIS (KEEP)
-# -------------------------------
 def analyze_contract(contract_text: str):
     risks = []
     text = contract_text.lower()
@@ -39,10 +36,7 @@ def analyze_contract(contract_text: str):
 
     return risks
 
-
-# -------------------------------
-# ✅ REAL GEMINI AI ANALYSIS
-# -------------------------------
+# REAL GEMINI AI ANALYSIS
 def analyze_with_llm(contract_text: str):
 
     prompt = f"""

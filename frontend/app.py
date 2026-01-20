@@ -2,9 +2,8 @@ import streamlit as st
 import sys
 import os
 
-# ---------------------------------------------------
 # FIX BACKEND IMPORT PATH
-# ---------------------------------------------------
+
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if ROOT_DIR not in sys.path:
     sys.path.append(ROOT_DIR)
@@ -15,18 +14,16 @@ from backend.llm_analyzer import analyze_contract, analyze_with_llm
 from backend.price_estimator import estimate_price
 from backend.chatbot import chatbot_response
 
-# ---------------------------------------------------
 # PAGE CONFIG
-# ---------------------------------------------------
+
 st.set_page_config(
     page_title="Car Lease AI Assistant",
     page_icon="🚗",
     layout="wide"
 )
 
-# ---------------------------------------------------
 # GLOBAL GLASSMORPHISM + CAR THEME
-# ---------------------------------------------------
+
 st.markdown(
     """
     <style>
@@ -98,9 +95,8 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# ---------------------------------------------------
 # SESSION STATE
-# ---------------------------------------------------
+
 if "ai_result" not in st.session_state:
     st.session_state.ai_result = None
 
@@ -110,9 +106,7 @@ if "chat_history" not in st.session_state:
 extracted_text = ""
 vehicle_data = None
 
-# ---------------------------------------------------
 # SIDEBAR NAVIGATION (STANDARD PRODUCT STYLE)
-# ---------------------------------------------------
 with st.sidebar:
     st.title("🚗 Car Lease AI")
     st.caption("Smart Contract Assistant")
@@ -133,9 +127,8 @@ with st.sidebar:
         """
     )
 
-# ===================================================
-# 🏠 DASHBOARD (HOME PAGE)
-# ===================================================
+#  DASHBOARD (HOME PAGE)
+
 if page == "🏠 Dashboard":
 
     st.markdown(
@@ -185,9 +178,8 @@ if page == "🏠 Dashboard":
             unsafe_allow_html=True
         )
 
-# ===================================================
-# 📄 CONTRACT REVIEW PAGE
-# ===================================================
+#  CONTRACT REVIEW PAGE
+
 elif page == "📄 Contract Review":
 
     st.markdown('<div class="glass">', unsafe_allow_html=True)
@@ -212,13 +204,13 @@ elif page == "📄 Contract Review":
                 ["📄 Contract Text", "⚠ Risk Analysis", "🤖 AI Review"]
             )
 
-            # -------- TAB 1
+            # TAB 1
             with tab1:
                 st.markdown('<div class="glass">', unsafe_allow_html=True)
                 st.text_area("Extracted Text", extracted_text, height=400)
                 st.markdown('</div>', unsafe_allow_html=True)
 
-            # -------- TAB 2
+            # TAB 2
             with tab2:
                 st.markdown('<div class="glass">', unsafe_allow_html=True)
 
@@ -235,7 +227,7 @@ elif page == "📄 Contract Review":
 
                 st.markdown('</div>', unsafe_allow_html=True)
 
-            # -------- TAB 3
+            # TAB 3
             with tab3:
                 st.markdown('<div class="glass">', unsafe_allow_html=True)
 
@@ -248,9 +240,8 @@ elif page == "📄 Contract Review":
 
                 st.markdown('</div>', unsafe_allow_html=True)
 
-# ===================================================
-# 💬 AI CHATBOT
-# ===================================================
+# AI CHATBOT
+
 elif page == "💬 AI Assistant":
 
     st.markdown('<div class="glass">', unsafe_allow_html=True)
@@ -268,9 +259,8 @@ elif page == "💬 AI Assistant":
 
     st.markdown('</div>', unsafe_allow_html=True)
 
-# ===================================================
-# 🚘 VIN DECODER
-# ===================================================
+#  VIN DECODER
+
 else:
 
     st.markdown('<div class="glass">', unsafe_allow_html=True)

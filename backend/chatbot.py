@@ -1,6 +1,5 @@
 from transformers import pipeline
 
-# Load lightweight model (fast & free)
 from transformers import pipeline
 
 chatbot_pipeline = pipeline(

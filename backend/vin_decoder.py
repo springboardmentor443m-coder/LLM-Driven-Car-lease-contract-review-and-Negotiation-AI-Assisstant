@@ -25,7 +25,7 @@ def decode_vin(vin):
         return None
 
 
-# ✅ Optional: run this file directly for testing only
+#  Optional: run this file directly for testing only
 if __name__ == "__main__":
     vin = "1GTG6CENOL1139305"  # sample VIN
     vehicle_data = decode_vin(vin)

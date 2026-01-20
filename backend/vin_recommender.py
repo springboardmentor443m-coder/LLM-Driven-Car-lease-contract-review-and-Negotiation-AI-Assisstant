@@ -15,7 +15,7 @@ def generate_lease_recommendation(vin):
 
     recommendations = []
 
-    # 🚗 Logic-based suggestions
+    # Logic-based suggestions
     if body.lower() in ["sport utility vehicle", "suv"]:
         recommendations.append(
             "SUV detected: Ensure higher mileage allowance and tire wear coverage."
@@ -49,7 +49,7 @@ Lease Recommendations:
     return summary
 
 
-# 🔍 Test run
+# Test run
 if __name__ == "__main__":
     test_vin = "1GTG6CEN0L1139305"
     print(generate_lease_recommendation(test_vin))

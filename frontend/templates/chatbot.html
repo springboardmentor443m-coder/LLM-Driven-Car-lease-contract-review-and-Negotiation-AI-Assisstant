@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Lease Negotiation Chatbot</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<h1>Ask about your lease</h1>
+
+<input type="text" id="question" placeholder="Eg: What is the monthly payment?" />
+<button onclick="askBot()">Ask</button>
+
+<p id="reply"></p>
+
+<br>
+<a href="/">⬅ Back to Upload</a>
+
+<script>
+async function send() {
+    const q = document.getElementById("question").value;
+    if (!q) return;
+
+    const formData = new FormData();
+    formData.append("user_question", q);
+
+    const res = await fetch("/chat_process", {
+        method: "POST",
+        body: formData
+    });
+
+    const data = await res.json();
+
+    const chat = document.getElementById("chat");
+
+    // ❌ REMOVE THIS LINE
+    // chat.innerHTML = "";
+
+    // ✅ APPEND messages
+    data.chat_history.forEach(msg => {
+        const div = document.createElement("div");
+        div.className = "message " + (msg.role === "user" ? "user" : "bot");
+        div.innerText = msg.text;
+        chat.appendChild(div);
+    });
+
+    document.getElementById("question").value = "";
+
+    // Auto scroll
+    chat.scrollTop = chat.scrollHeight;
+}
+</script>
+
+</body>
+</html>

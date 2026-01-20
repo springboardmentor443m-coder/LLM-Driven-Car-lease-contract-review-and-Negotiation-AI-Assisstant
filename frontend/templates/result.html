@@ -8,40 +8,86 @@
 
 <h1>Contract Analysis Result</h1>
 
+<!-- ================= LEASE DETAILS ================= -->
 <h2>Extracted Lease Details</h2>
+
+{% if extracted_details and extracted_details.get("Lease") %}
 <table>
-    {% for key, value in extracted_details.items() %}
+    {% for key, value in extracted_details["Lease"].items() %}
+    {% if value %}
     <tr>
         <th>{{ key }}</th>
         <td>{{ value }}</td>
     </tr>
+    {% endif %}
     {% endfor %}
 </table>
+{% else %}
+<p>No lease details found.</p>
+{% endif %}
 
-<h2>VIN Details</h2>
+<!-- ================= VIN DETAILS ================= -->
+<h2>Vehicle (VIN) Details</h2>
+
+{% if vin_details %}
 <table>
     {% for key, value in vin_details.items() %}
+    {% if value %}
     <tr>
         <th>{{ key }}</th>
         <td>{{ value }}</td>
     </tr>
+    {% endif %}
     {% endfor %}
 </table>
+{% else %}
+<p>No vehicle details available.</p>
+{% endif %}
 
+<!-- ================= PRICE ESTIMATION ================= -->
 <h2>Estimated Vehicle Price</h2>
+
+{% if estimated_vehicle_price %}
 <table>
     {% for key, value in estimated_vehicle_price.items() %}
+    {% if value %}
     <tr>
-        <th>{{ key }}</th>
+        <th>{{ key.replace('_',' ').title() }}</th>
         <td>{{ value }}</td>
     </tr>
+    {% endif %}
     {% endfor %}
 </table>
+{% else %}
+<p>Price estimation not available.</p>
+{% endif %}
 
+<!-- ================= FAIRNESS SCORE ================= -->
 <h2>Fairness Score</h2>
-<p><b>Score:</b> {{ fairness_score }}</p>
+
+{% if fairness_score %}
+<p>
+    <b>Score:</b> {{ fairness_score.get("Fairness_Score", "N/A") }} / 100
+</p>
+
+{% if fairness_score.get("Warnings") %}
+<ul>
+    {% for warn in fairness_score["Warnings"] %}
+    <li>{{ warn }}</li>
+    {% endfor %}
+</ul>
+{% else %}
+<p>No unfair clauses detected.</p>
+{% endif %}
+
+{% else %}
+<p>Fairness analysis not available.</p>
+{% endif %}
 
 <br>
+
+<a href="/chatbot">🤖 Talk to Negotiation Chatbot</a>
+<br><br>
 <a href="/">⬅ Upload another contract</a>
 
 </body>

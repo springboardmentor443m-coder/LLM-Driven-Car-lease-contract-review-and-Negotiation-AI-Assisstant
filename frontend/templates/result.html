@@ -1,35 +1,48 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Analysis Result</title>
+    <title>Contract Analysis Result</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
+<body>
 
-<body style="font-family: Arial; background:#f5f5f5; padding:20px">
+<h1>Contract Analysis Result</h1>
 
-<h1>📄 Analysis Result</h1>
+<h2>Extracted Lease Details</h2>
+<table>
+    {% for key, value in extracted_details.items() %}
+    <tr>
+        <th>{{ key }}</th>
+        <td>{{ value }}</td>
+    </tr>
+    {% endfor %}
+</table>
 
-<div style="background:white; padding:15px; margin-bottom:15px;">
-    <h3>File Name</h3>
-    <p>{{ file_name }}</p>
-</div>
+<h2>VIN Details</h2>
+<table>
+    {% for key, value in vin_details.items() %}
+    <tr>
+        <th>{{ key }}</th>
+        <td>{{ value }}</td>
+    </tr>
+    {% endfor %}
+</table>
 
-<div style="background:white; padding:15px; margin-bottom:15px;">
-    <h3>Extracted Details</h3>
-    <pre>{{ extracted_details | tojson(indent=2) }}</pre>
-</div>
+<h2>Estimated Vehicle Price</h2>
+<table>
+    {% for key, value in estimated_vehicle_price.items() %}
+    <tr>
+        <th>{{ key }}</th>
+        <td>{{ value }}</td>
+    </tr>
+    {% endfor %}
+</table>
 
-<div style="background:white; padding:15px; margin-bottom:15px;">
-    <h3>VIN Details</h3>
-    <pre>{{ vin_details | tojson(indent=2) }}</pre>
-</div>
+<h2>Fairness Score</h2>
+<p><b>Score:</b> {{ fairness_score }}</p>
 
-<div style="background:white; padding:15px; margin-bottom:15px;">
-    <h3>Fairness Score</h3>
-    <pre>{{ fairness_score | tojson(indent=2) }}</pre>
-</div>
-
-<a href="/">⬅ Upload another file</a>
+<br>
+<a href="/">⬅ Upload another contract</a>
 
 </body>
 </html>

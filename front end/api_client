@@ -1,0 +1,288 @@
+import requests
+import json
+import os
+from typing import Dict, Optional, List
+from datetime import datetime
+
+class APIClient:
+    def __init__(self):
+        self.nhtsa_base_url = "https://vpic.nhtsa.dot.gov/api"
+        self.edmunds_base_url = "https://api.edmunds.com/api"
+        
+        # Load API keys from environment or session state
+        self.openai_key = os.getenv('OPENAI_API_KEY', '')
+        self.edmunds_key = os.getenv('EDMUNDS_API_KEY', '')
+    
+    def extract_sla(self, contract_text: str) -> Dict:
+        """Extract SLA using OpenAI GPT"""
+        if not self.openai_key:
+            return self._extract_sla_regex(contract_text)
+        
+        try:
+            import openai
+            openai.api_key = self.openai_key
+            
+            prompt = f"""
+            Extract the following key terms from this car lease/loan contract:
+            
+            {contract_text[:3000]}
+            
+            Extract and return as JSON with these fields:
+            1. interest_rate (APR percentage)
+            2. lease_term_months
+            3. monthly_payment_amount
+            4. down_payment_amount
+            5. residual_value
+            6. mileage_allowance_per_year
+            7. mileage_overage_charge_per_mile
+            8. early_termination_conditions
+            9. purchase_option_price
+            10. maintenance_responsibilities
+            11. warranty_coverage
+            12. late_fee_amount
+            13. penalty_clauses
+            14. insurance_requirements
+            
+            If a field cannot be found, set it to null.
+            Return ONLY valid JSON, no other text.
+            """
+            
+            response = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": "You are a contract analysis expert. Extract precise numerical values and terms from contracts."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.1,
+                max_tokens=1000
+            )
+            
+            result = response.choices[0].message.content
+            
+            # Clean and parse JSON
+            import re
+            json_match = re.search(r'\{.*\}', result, re.DOTALL)
+            if json_match:
+                return json.loads(json_match.group())
+            else:
+                return self._extract_sla_regex(contract_text)
+                
+        except Exception as e:
+            print(f"OpenAI API error: {e}")
+            return self._extract_sla_regex(contract_text)
+    
+    def _extract_sla_regex(self, text: str) -> Dict:
+        """Fallback regex-based extraction"""
+        import re
+        
+        sla_data = {}
+        
+        patterns = {
+            'interest_rate': r'APR\s*[:=]?\s*([\d\.]+)%',
+            'monthly_payment_amount': r'(?:monthly payment|payment amount)\s*[:=]?\s*\$?\s*([\d,]+\.?\d*)',
+            'lease_term_months': r'lease term\s*[:=]?\s*(\d+)\s*(?:months|years?)',
+            'down_payment_amount': r'down payment\s*[:=]?\s*\$?\s*([\d,]+\.?\d*)',
+            'mileage_allowance_per_year': r'mileage[\s\S]*?(\d+,\d+|\d+)\s*miles',
+            'mileage_overage_charge_per_mile': r'overage charge\s*[:=]?\s*\$?\s*([\d\.]+)',
+            'residual_value': r'residual value\s*[:=]?\s*\$?\s*([\d,]+\.?\d*)',
+            'purchase_option_price': r'purchase option\s*[:=]?\s*\$?\s*([\d,]+\.?\d*)'
+        }
+        
+        for key, pattern in patterns.items():
+            match = re.search(pattern, text, re.IGNORECASE)
+            if match:
+                value = match.group(1).replace(',', '')
+                sla_data[key] = value
+            else:
+                sla_data[key] = None
+        
+        return sla_data
+    
+    def get_nhtsa_data(self, vin: str) -> Dict:
+        """Get vehicle data from NHTSA API"""
+        try:
+            url = f"{self.nhtsa_base_url}/vehicles/decodevin/{vin}?format=json"
+            response = requests.get(url, timeout=10)
+            data = response.json()
+            
+            if data.get('Results'):
+                results = {}
+                for item in data['Results']:
+                    if item.get('Variable') and item.get('Value'):
+                        results[item['Variable']] = item['Value']
+                
+                return {
+                    'vin': vin,
+                    'make': results.get('Make'),
+                    'model': results.get('Model'),
+                    'year': results.get('Model Year'),
+                    'body_style': results.get('Body Class'),
+                    'engine': results.get('Engine Model'),
+                    'fuel_type': results.get('Fuel Type - Primary'),
+                    'transmission': results.get('Transmission Style'),
+                    'drive_type': results.get('Drive Type'),
+                    'doors': results.get('Doors'),
+                    'seats': results.get('Seats'),
+                    'country': results.get('Plant Country'),
+                    'plant_city': results.get('Plant City')
+                }
+        except Exception as e:
+            print(f"NHTSA API error: {e}")
+        
+        return {}
+    
+    def get_pricing_data(self, make: str, model: str, year: str) -> Dict:
+        """Get vehicle pricing data"""
+        pricing_data = {
+            'edmunds': self._get_edmunds_price(make, model, year),
+            'kbb': self._get_kbb_estimate(make, model, year),
+            'truecar': self._get_truecar_price(make, model, year)
+        }
+        
+        # Calculate average
+        valid_prices = [p for p in pricing_data.values() if isinstance(p, (int, float)) and p > 0]
+        if valid_prices:
+            pricing_data['average_price'] = sum(valid_prices) / len(valid_prices)
+        else:
+            pricing_data['average_price'] = 0
+        
+        return pricing_data
+    
+    def _get_edmunds_price(self, make: str, model: str, year: str) -> Optional[float]:
+        """Get price from Edmunds API"""
+        if not self.edmunds_key:
+            return None
+        
+        try:
+            # Convert make/model to Edmunds format
+            make = make.lower().replace(' ', '-')
+            model = model.lower().replace(' ', '-')
+            
+            url = f"{self.edmunds_base_url}/vehicle/v2/{make}/{model}/{year}"
+            params = {
+                'fmt': 'json',
+                'api_key': self.edmunds_key
+            }
+            
+            response = requests.get(url, params=params, timeout=10)
+            data = response.json()
+            
+            # Extract MSRP
+            if 'price' in data and 'baseMSRP' in data['price']:
+                return float(data['price']['baseMSRP'])
+            elif 'price' in data and 'baseInvoice' in data['price']:
+                return float(data['price']['baseInvoice'])
+                
+        except Exception as e:
+            print(f"Edmunds API error: {e}")
+        
+        return None
+    
+    def _get_kbb_estimate(self, make: str, model: str, year: str) -> Optional[float]:
+        """Get Kelley Blue Book estimate (placeholder)"""
+        # Note: KBB API typically requires paid access
+        # This is a placeholder implementation
+        return None
+    
+    def _get_truecar_price(self, make: str, model: str, year: str) -> Optional[float]:
+        """Get TrueCar price (placeholder)"""
+        # Note: TrueCar API access varies
+        # This is a placeholder implementation
+        return None
+    
+    def get_recall_data(self, make: str, model: str, year: str) -> List[Dict]:
+        """Get recall information from NHTSA"""
+        try:
+            url = "https://api.nhtsa.gov/recalls/recallsByVehicle"
+            params = {
+                'make': make,
+                'model': model,
+                'modelYear': year
+            }
+            
+            response = requests.get(url, params=params, timeout=10)
+            data = response.json()
+            
+            recalls = []
+            if data.get('results'):
+                for recall in data['results'][:10]:  # Limit to 10 recalls
+                    recalls.append({
+                        'recall_number': recall.get('NHTSACampaignNumber'),
+                        'component': recall.get('Component'),
+                        'summary': recall.get('Summary'),
+                        'consequence': recall.get('Consequence'),
+                        'remedy': recall.get('Remedy'),
+                        'date': recall.get('ReportReceivedDate')
+                    })
+            
+            return recalls
+            
+        except Exception as e:
+            print(f"Recall API error: {e}")
+            return []
+    
+    def get_safety_ratings(self, make: str, model: str, year: str) -> List[Dict]:
+        """Get safety ratings from NHTSA"""
+        try:
+            url = f"https://api.nhtsa.gov/SafetyRatings/vehicle/modelyear/{year}/make/{make}/model/{model}"
+            response = requests.get(url, timeout=10)
+            data = response.json()
+            
+            if data.get('Results'):
+                return data['Results'][:5]  # Return first 5 ratings
+            
+        except Exception as e:
+            print(f"Safety ratings API error: {e}")
+        
+        return []
+    
+    def calculate_fairness_score(self, sla_data: Dict, vehicle_data: Dict = None) -> float:
+        """Calculate contract fairness score"""
+        score = 70  # Base score
+        
+        try:
+            # Interest rate adjustment
+            if sla_data.get('interest_rate'):
+                apr = float(sla_data['interest_rate'])
+                if apr > 8:
+                    score -= 20
+                elif apr > 6:
+                    score -= 10
+                elif apr < 4:
+                    score += 10
+            
+            # Mileage allowance adjustment
+            if sla_data.get('mileage_allowance_per_year'):
+                mileage = int(sla_data['mileage_allowance_per_year'])
+                if mileage < 10000:
+                    score -= 15
+                elif mileage < 12000:
+                    score -= 5
+                elif mileage > 15000:
+                    score += 5
+            
+            # Overage charge adjustment
+            if sla_data.get('mileage_overage_charge_per_mile'):
+                charge = float(sla_data['mileage_overage_charge_per_mile'])
+                if charge > 0.25:
+                    score -= 10
+            
+            # Vehicle price comparison
+            if vehicle_data and 'pricing' in vehicle_data:
+                avg_price = vehicle_data['pricing'].get('average_price')
+                if avg_price and sla_data.get('monthly_payment_amount'):
+                    monthly = float(sla_data['monthly_payment_amount'])
+                    term = int(sla_data.get('lease_term_months', 36))
+                    
+                    total_lease_cost = monthly * term
+                    expected_cost = avg_price * 0.6  # Approx 60% depreciation over 3 years
+                    
+                    if total_lease_cost > expected_cost * 1.2:
+                        score -= 15
+                    elif total_lease_cost < expected_cost * 0.8:
+                        score += 10
+            
+        except Exception as e:
+            print(f"Score calculation error: {e}")
+        
+        return max(0, min(100, score))

@@ -324,10 +324,7 @@
             box-shadow: 0 8px 20px rgba(16, 185, 129, 0.35);
         }
 
-        .chatbot button:before {
-            content: "🤖";
-        }
-
+        
         /* Analyzing Message */
         #analyzingMessage {
             position: fixed;
@@ -494,6 +491,8 @@
         <h2>Recalls Summary</h2>
         <textarea id="recall_summary" readonly placeholder="Vehicle recall information will appear here..."></textarea>
     </div>
+   
+   
 
     <!-- Market Prices -->
     <div class="section">
@@ -505,21 +504,29 @@
         </div>
     </div>
 
-    <!-- Chatbot -->
+    
+     <div class="section">
+        <h2>Red Flags</h2>
+        <textarea id="red_flags" readonly placeholder="Red flags present in the agreement will appear here..."></textarea>
+    </div>
+    
     <div class="chatbot">
+        <a href="{{ url_for('compare') }}">
+            <button>Do you want to compare two PDFs.?</button>
+        </a>
         <a href="{{ url_for('chat') }}">
             <button>Negotiate with AI Assistant</button>
         </a>
     </div>
 
+
 </main>
 
 <script>
-// YOUR ORIGINAL JAVASCRIPT WITH ADDED ANALYZING MESSAGE
+
 document.getElementById("uploadForm").addEventListener("submit", async function(e) {
     e.preventDefault();
     
-    // Show analyzing message
     const analyzingMessage = document.getElementById("analyzingMessage");
     analyzingMessage.classList.add("active");
     
@@ -534,7 +541,6 @@ document.getElementById("uploadForm").addEventListener("submit", async function(
     const res = await fetch("/process");
     const data = await res.json();
     
-    // Hide analyzing message once data is received
     analyzingMessage.classList.remove("active");
 
     document.getElementById("summary").value = data.summary || "";
@@ -547,6 +553,7 @@ document.getElementById("uploadForm").addEventListener("submit", async function(
     document.getElementById("fuel").innerText = car.FuelType || "—";
     document.getElementById("mileage").innerText = car.Mileage || "—";
 
+    document.getElementById("red_flags").value = data.red_flags || "";
     document.getElementById("recall_summary").value = data.recall_summary || "";
     
 

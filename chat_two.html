@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AI Vehicle Comparison Assistant</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #f8fafc, #eef2f7);
+    color: #1e293b;
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    text-align: center;
+    background: linear-gradient(135deg, #1e40af, #3b82f6);
+    color: white;
+    padding: 22px 15px;
+    font-size: 1.4rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+.car-label-container {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    padding: 12px;
+    margin-top: 5px;
+}
+
+.car-label {
+    background: white;
+    padding: 10px 18px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    font-weight: 600;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.chat-container {
+    max-width: 780px;
+    margin: 20px auto;
+    padding: 5px 20px 100px;
+}
+
+.message {
+    padding: 12px 18px;
+    border-radius: 12px;
+    margin: 10px 0;
+    max-width: 75%;
+    line-height: 1.4;
+    font-size: 0.96rem;
+}
+
+.user {
+    background: #dbeafe;
+    margin-left: auto;
+    text-align: right;
+}
+
+.bot {
+    background: #e2e8f0;
+    margin-right: auto;
+}
+
+.chat-input {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    border-top: 1px solid #e2e8f0;
+    padding: 14px 18px;
+    display: flex;
+    gap: 10px;
+}
+
+.chat-input input {
+    flex: 1;
+    padding: 12px 14px;
+    font-size: 1rem;
+    border-radius: 10px;
+    border: 1px solid #cbd5e1;
+}
+
+.chat-input input:focus {
+    outline: none;
+    border-color: #3b82f6;
+}
+
+.chat-input button {
+    padding: 12px 25px;
+    background: linear-gradient(135deg, #10b981, #059669);
+    border: none;
+    color: white;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.chat-input button:hover {
+    opacity: 0.9;
+}
+</style>
+</head>
+
+<body>
+
+<header>AI Car Comparison Chat Assistant</header>
+
+<div class="car-label-container">
+    <div class="car-label">Car 1</div>
+    <div class="car-label">Car 2</div>
+</div>
+
+<div class="chat-container" id="chatHistory"></div>
+
+<div class="chat-input">
+    <input id="questionInput" placeholder="Ask which car is better, affordability, resale value, reliability, etc...">
+    <button onclick="sendMessage()">Send</button>
+</div>
+
+<script>
+async function sendMessage() {
+    const question = document.getElementById("questionInput").value.trim();
+    if (!question) return;
+
+    addMessage(question, "user");
+    document.getElementById("questionInput").value = "";
+
+    const res = await fetch("/compare_chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `user_question=${encodeURIComponent(question)}`
+    });
+
+    const data = await res.json();
+    addMessage(data.answer, "bot");
+}
+
+function addMessage(text, role) {
+    const container = document.getElementById("chatHistory");
+    const div = document.createElement("div");
+    div.classList.add("message", role);
+    div.innerText = text;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+}
+</script>
+
+</body>
+</html>

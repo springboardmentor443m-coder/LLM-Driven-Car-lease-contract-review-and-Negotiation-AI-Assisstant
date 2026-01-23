@@ -3,9 +3,8 @@ import sys
 import os
 import plotly.graph_objects as go
 
-# --------------------------------------------------
 # PATH FIX
-# --------------------------------------------------
+
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if ROOT_DIR not in sys.path:
     sys.path.append(ROOT_DIR)
@@ -15,18 +14,16 @@ from backend.vin_decoder import decode_vin
 from backend.llm_analyzer import analyze_contract, analyze_with_llm
 from backend.chatbot import chatbot_response
 
-# --------------------------------------------------
 # PAGE CONFIG
-# --------------------------------------------------
+
 st.set_page_config(
     page_title="Car Lease AI Assistant",
     page_icon="🚘",
     layout="wide"
 )
 
-# --------------------------------------------------
 # CUSTOM CSS FUNCTION
-# --------------------------------------------------
+
 def load_luxury_css():
     st.markdown("""
     <style>
@@ -108,17 +105,15 @@ def load_luxury_css():
 
 load_luxury_css()
 
-# --------------------------------------------------
 # SESSION STATE
-# --------------------------------------------------
+
 st.session_state.setdefault("chat_history", [])
 st.session_state.setdefault("contract_text", "")
 st.session_state.setdefault("vehicle_data", None)
 st.session_state.setdefault("ai_result", None)
 
-# --------------------------------------------------
 # SIDEBAR – VEHICLE FILTERS
-# --------------------------------------------------
+
 with st.sidebar:
     st.title("🚘 Vehicle Filters")
 
@@ -133,9 +128,8 @@ with st.sidebar:
         ["🏠 Dashboard", "📄 Contract Review", "💬 AI Assistant", "🚘 VIN Decoder"]
     )
 
-# --------------------------------------------------
 # DASHBOARD
-# --------------------------------------------------
+
 if page == "🏠 Dashboard":
 
     st.markdown("""
@@ -207,9 +201,8 @@ if page == "🏠 Dashboard":
 
     st.plotly_chart(fig, use_container_width=True)
 
-# --------------------------------------------------
 # CONTRACT REVIEW (FEATURE UNCHANGED)
-# --------------------------------------------------
+
 elif page == "📄 Contract Review":
 
     uploaded_file = st.file_uploader(
@@ -250,9 +243,8 @@ elif page == "📄 Contract Review":
             if st.session_state.ai_result:
                 st.markdown(st.session_state.ai_result)
 
-# --------------------------------------------------
 # AI ASSISTANT
-# --------------------------------------------------
+
 elif page == "💬 AI Assistant":
 
     st.subheader("💬 Gemini Lease Assistant")
@@ -271,9 +263,8 @@ elif page == "💬 AI Assistant":
     for sender, msg in st.session_state.chat_history:
         st.markdown(f"**{sender}:** {msg}")
 
-# --------------------------------------------------
 # VIN DECODER
-# --------------------------------------------------
+
 else:
 
     vin_input = st.text_input("Enter VIN")

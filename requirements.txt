@@ -1,0 +1,22 @@
+streamlit
+flask
+requests
+python-dotenv
+
+# OCR & PDF processing
+pytesseract
+pillow
+pdf2image
+pymupdf
+
+# LLM & embeddings
+groq
+langchain
+langchain-community
+langchain-groq
+langchain-text-splitters
+sentence-transformers
+chromadb
+
+# Utilities
+numpy
